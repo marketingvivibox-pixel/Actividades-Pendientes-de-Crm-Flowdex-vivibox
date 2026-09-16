@@ -1,0 +1,479 @@
+import { FlowdexDocument } from '../types';
+
+export const initialFlowdexHTML = `
+    <div class="flowdex-root font-sans text-slate-800 antialiased">
+        <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+            <!-- Header Banner -->
+            <div class="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 text-white p-8 md:p-12 text-center relative">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-blue-100 text-xs font-semibold uppercase tracking-wider mb-4 border border-white/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Documento Oficial Vivibox · Flowdex
+                </div>
+                <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight mb-3">📋 Política Integral de Flowdex</h1>
+                <p class="text-lg md:text-xl text-blue-100 font-medium max-w-2xl mx-auto">Atención, Prioridades y Asignación de Conversaciones y Leads</p>
+                <div class="flex flex-wrap justify-center items-center gap-4 mt-6 text-sm text-blue-200/90 font-medium">
+                    <span class="bg-white/10 px-3 py-1 rounded-md">Versión 1.0</span>
+                    <span>•</span>
+                    <span>Septiembre 2026</span>
+                    <span>•</span>
+                    <span class="text-emerald-300 font-semibold">Aplicación Inmediata</span>
+                </div>
+            </div>
+
+            <div class="p-6 md:p-12 space-y-12">
+                <!-- Resumen de Prioridades Rápidas -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-950">
+                        <div class="flex items-center justify-between font-bold text-sm">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span> P1 CRÍTICA</span>
+                            <span class="text-rose-600 font-extrabold">5 min</span>
+                        </div>
+                        <p class="text-xs text-rose-800 mt-2">Pagos no reconocidos, errores de entrega activos, reclamos públicos.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950">
+                        <div class="flex items-center justify-between font-bold text-sm">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> P2 ALTA</span>
+                            <span class="text-amber-600 font-extrabold">5 min</span>
+                        </div>
+                        <p class="text-xs text-amber-800 mt-2">Clientes listos para comprar hoy, cotizaciones pendientes, dudas finales.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950">
+                        <div class="flex items-center justify-between font-bold text-sm">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> P3 NORMAL</span>
+                            <span class="text-emerald-700 font-extrabold">15 min</span>
+                        </div>
+                        <p class="text-xs text-emerald-800 mt-2">Consultas generales de catálogo, medidas, zonas de cobertura habitual.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-950">
+                        <div class="flex items-center justify-between font-bold text-sm">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> P4 BAJA</span>
+                            <span class="text-blue-700 font-extrabold">30 min</span>
+                        </div>
+                        <p class="text-xs text-blue-800 mt-2">Saludos sin consulta, proveedores, mensajes repetidos o spam.</p>
+                    </div>
+                </div>
+
+                <!-- Índice -->
+                <div class="bg-slate-50 border-l-4 border-indigo-600 p-6 rounded-r-xl">
+                    <h3 class="text-indigo-900 font-bold text-lg mb-3 flex items-center gap-2">
+                        <span>📑</span> Índice de Contenidos
+                    </h3>
+                    <ol class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-700 font-medium pl-4 list-decimal list-inside">
+                        <li><a href="#sec-1" class="hover:text-indigo-600 hover:underline">1. Qué es esta política y para qué sirve</a></li>
+                        <li><a href="#sec-2" class="hover:text-indigo-600 hover:underline">2. Cómo funciona el sistema de horarios</a></li>
+                        <li><a href="#sec-3" class="hover:text-indigo-600 hover:underline">3. Niveles de urgencia (Prioridades)</a></li>
+                        <li><a href="#sec-4" class="hover:text-indigo-600 hover:underline">4. Cómo se atienden las conversaciones</a></li>
+                        <li><a href="#sec-5" class="hover:text-indigo-600 hover:underline">5. Cómo se asignan los leads de marketing</a></li>
+                        <li><a href="#sec-6" class="hover:text-indigo-600 hover:underline">6. Límites de trabajo por asesor</a></li>
+                        <li><a href="#sec-7" class="hover:text-indigo-600 hover:underline">7. Alertas y escalamientos</a></li>
+                        <li><a href="#sec-8" class="hover:text-indigo-600 hover:underline">8. Medidas de éxito (Indicadores)</a></li>
+                        <li><a href="#sec-9" class="hover:text-indigo-600 hover:underline">9. Glosario de términos</a></li>
+                        <li><a href="#sec-10" class="hover:text-indigo-600 hover:underline">10. Responsables y cambios futuros</a></li>
+                    </ol>
+                </div>
+
+                <!-- 1. Propósito -->
+                <section id="sec-1" class="space-y-4 pt-4 border-t border-slate-100">
+                    <h2 class="text-2xl font-bold text-slate-900 pb-2 border-b-2 border-indigo-500">1. Qué es Esta Política y Para Qué Sirve</h2>
+                    <div class="bg-indigo-50/80 border-l-4 border-indigo-600 p-4 rounded-r-lg text-indigo-950">
+                        <p><strong>Objetivo Principal:</strong> Garantizar que cada cliente reciba atención rápida, justa y según su necesidad, sin sobrecargar a ningún asesor.</p>
+                    </div>
+                    <p class="text-slate-700 leading-relaxed">Esta política ordena dos cosas clave en Flowdex para Vivibox:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                            <span class="font-bold text-indigo-700 block mb-1">1. Conversaciones de WhatsApp</span>
+                            <p class="text-sm text-slate-600">Se atienden según su urgencia y se distribuyen equilibradamente entre los 15 asesores activos.</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                            <span class="font-bold text-purple-700 block mb-1">2. Leads de Meta & TikTok Ads</span>
+                            <p class="text-sm text-slate-600">Se asignan a los asesores más aptos, con mayor rapidez y probabilidad de conversión a venta.</p>
+                        </div>
+                    </div>
+                    <p class="text-slate-600 text-sm italic">La política no decide quién es el mejor vendedor. Decide quién debe atender cada caso en este instante, basándose en urgencia, disponibilidad real y equilibrio de carga.</p>
+                </section>
+
+                <!-- 2. Horarios -->
+                <section id="sec-2" class="space-y-4 pt-4 border-t border-slate-100">
+                    <h2 class="text-2xl font-bold text-slate-900 pb-2 border-b-2 border-indigo-500">2. Cómo Funciona el Sistema de Horarios</h2>
+                    <div class="bg-slate-50 border-l-4 border-purple-600 p-5 rounded-r-lg space-y-2 text-slate-800">
+                        <h3 class="font-bold text-purple-900 text-base">Horario de Atención Automática</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm pt-2">
+                            <p><strong>Lunes a viernes:</strong> 09:00 a 18:00</p>
+                            <p><strong>Sábados:</strong> 09:00 a 13:00</p>
+                            <p><strong>Zona Horaria:</strong> America/Lima (UTC-5)</p>
+                            <p><strong>Domingos y feriados:</strong> Sin atención automática</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm text-slate-700">
+                        <p class="font-semibold text-slate-900">¿Qué pasa fuera de horario?</p>
+                        <ul class="list-disc pl-5 space-y-1 text-slate-600">
+                            <li>Los mensajes que llegan fuera de horario se pausan automáticamente. El reloj del SLA se detiene.</li>
+                            <li>Cuando abra el siguiente horario de atención, se reanuda. El reloj cuenta solo el tiempo en el que el asesor estuvo disponible.</li>
+                            <li>Si hay sábados extendidos (13:00 a 18:00), debe registrarse antes de las 13:00 quién está disponible.</li>
+                        </ul>
+                    </div>
+                    <div class="p-3 bg-amber-50 rounded-lg text-amber-900 text-xs border border-amber-200">
+                        <strong>Estado del asesor:</strong> Un asesor solo recibe nuevos casos si está activo, en turno y conectado en Flowdex. No basta con estar conectado; debe marcar disponibilidad operativa.
+                    </div>
+                </section>
+
+                <!-- 3. Prioridades -->
+                <section id="sec-3" class="space-y-4 pt-4 border-t border-slate-100">
+                    <h2 class="text-2xl font-bold text-slate-900 pb-2 border-b-2 border-indigo-500">3. Niveles de Urgencia (Prioridades)</h2>
+                    <p class="text-slate-700 text-sm">Cada mensaje tiene un nivel de urgencia. La urgencia evalúa <strong>lo que necesita el cliente en este momento</strong>, no su capacidad de gasto o historial acumulado.</p>
+                    
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-xs">
+                        <table class="w-full text-left text-sm border-collapse">
+                            <thead>
+                                <tr class="bg-indigo-600 text-white font-semibold">
+                                    <th class="p-3 w-28">Nivel</th>
+                                    <th class="p-3">¿Cuándo aplica?</th>
+                                    <th class="p-3 w-32">Tiempo SLA</th>
+                                    <th class="p-3">Ejemplos concretos</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                <tr class="bg-rose-50/70 hover:bg-rose-100/60 transition-colors">
+                                    <td class="p-3 font-bold text-rose-700">🔴 P1 CRÍTICA</td>
+                                    <td class="p-3 text-slate-700">Hay dinero, pedido o reclamo delicado en juego <strong>ahora mismo</strong>.</td>
+                                    <td class="p-3 font-extrabold text-rose-700">≤ 5 minutos</td>
+                                    <td class="p-3 text-xs text-slate-600">Pago cobrado no reconocido; pedido pagado extraviado; error en reparto activo; cliente inconforme que amenaza con escalamiento público.</td>
+                                </tr>
+                                <tr class="bg-amber-50/70 hover:bg-amber-100/60 transition-colors">
+                                    <td class="p-3 font-bold text-amber-800">🟠 P2 ALTA</td>
+                                    <td class="p-3 text-slate-700">El cliente quiere comprar <strong>hoy</strong> pero tiene dudas o necesita resolver detalles.</td>
+                                    <td class="p-3 font-extrabold text-amber-800">≤ 5 minutos</td>
+                                    <td class="p-3 text-xs text-slate-600">Quiero comprar hoy; confirmación de stock y envío urgente; cotización pendiente; retoma un carrito abandonado reciente.</td>
+                                </tr>
+                                <tr class="bg-emerald-50/70 hover:bg-emerald-100/60 transition-colors">
+                                    <td class="p-3 font-bold text-emerald-800">🟢 P3 NORMAL</td>
+                                    <td class="p-3 text-slate-700">Preguntas sobre productos, precios o detalles sin urgencia inmediata.</td>
+                                    <td class="p-3 font-extrabold text-emerald-800">≤ 15 minutos</td>
+                                    <td class="p-3 text-xs text-slate-600">¿Qué modelos tienen?; ¿Cuáles son las medidas?; ¿Llega a mi distrito?; seguimiento de una compra ya despachada.</td>
+                                </tr>
+                                <tr class="bg-blue-50/70 hover:bg-blue-100/60 transition-colors">
+                                    <td class="p-3 font-bold text-blue-800">🔵 P4 BAJA</td>
+                                    <td class="p-3 text-slate-700">Información no comercial, interés bajo o posible spam/proveedores.</td>
+                                    <td class="p-3 font-extrabold text-blue-800">≤ 30 minutos</td>
+                                    <td class="p-3 text-xs text-slate-600">Consultas de proveedores o postulaciones; saludos sin pregunta clara; mensajes repetidos o spam.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-xs text-slate-500 font-semibold bg-slate-100 p-3 rounded-lg">💡 <strong>Regla de desempate:</strong> Si dudas entre P1 y P2, clasifica como P2. Solo escala a P1 si hay dinero, pedido comprometido o riesgo de imagen <strong>en este instante</strong>.</p>
+                </section>
+
+                <!-- 4. Cómo se atienden conversaciones -->
+                <section id="sec-4" class="space-y-4 pt-4 border-t border-slate-100">
+                    <h2 class="text-2xl font-bold text-slate-900 pb-2 border-b-2 border-indigo-500">4. Cómo Se Atienden las Conversaciones de WhatsApp</h2>
+                    <h3 class="font-bold text-indigo-900 text-lg">Orden de la Cola en Flowdex</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                        <div class="p-3 bg-blue-50 border-l-4 border-blue-600 rounded-r-md">
+                            <strong class="text-blue-900 block mb-1">1° Primero</strong>
+                            <span class="text-slate-600 text-xs">Casos P1 que están vencidos o a punto de vencer.</span>
+                        </div>
+                        <div class="p-3 bg-indigo-50 border-l-4 border-indigo-600 rounded-r-md">
+                            <strong class="text-indigo-900 block mb-1">2° En orden de urgencia</strong>
+                            <span class="text-slate-600 text-xs">Casos P2, luego P3, y finalmente P4.</span>
+                        </div>
+                        <div class="p-3 bg-purple-50 border-l-4 border-purple-600 rounded-r-md">
+                            <strong class="text-purple-900 block mb-1">3° En caso de empate</strong>
+                            <span class="text-slate-600 text-xs">Aquel que lleve mayor tiempo cronológico en espera.</span>
+                        </div>
+                    </div>
+
+                    <h3 class="font-bold text-indigo-900 text-lg mt-6">Criterio de Elección del Asesor</h3>
+                    <div class="space-y-2 text-sm text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="flex items-start gap-2">
+                            <span class="font-bold text-indigo-600 min-w-[24px]">Paso 1:</span>
+                            <p>Solo compiten asesores activos, en turno y sin haber alcanzado el tope de conversaciones (200 máximo).</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="font-bold text-indigo-600 min-w-[24px]">Paso 2:</span>
+                            <p>Se selecciona el asesor que tiene menor cantidad de conversaciones abiertas en ese momento.</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="font-bold text-indigo-600 min-w-[24px]">Paso 3:</span>
+                            <p>En caso de empate, se elige al que lleve más tiempo sin recibir una asignación nueva.</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="font-bold text-indigo-600 min-w-[24px]">Paso 4:</span>
+                            <p>Si ningún asesor califica o está disponible, se dispara alerta al supervisor y el caso entra en espera protegida.</p>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-slate-100 rounded-xl text-xs text-slate-700 space-y-1">
+                        <p class="font-bold text-slate-900">Continuidad del asesor:</p>
+                        <p>Una vez asignado, el cliente continúa con el mismo asesor para preservar contexto, salvo:</p>
+                        <ul class="list-disc pl-5 text-slate-600 space-y-0.5 mt-1">
+                            <li>El asesor tiene licencia, descanso o ausencia declarada.</li>
+                            <li>La conversación está vencida (P1 sin respuesta dentro del margen de seguridad).</li>
+                            <li>El asesor solicita reasignación fundada (motivo debidamente tipificado).</li>
+                            <li>El cliente solicita expresamente cambio de asesor.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- 5. Asignación de Leads -->
+                <section id="sec-5" class="space-y-4 pt-4 border-t border-slate-100">
+                    <h2 class="text-2xl font-bold text-slate-900 pb-2 border-b-2 border-indigo-500">5. Cómo Se Asignan los Leads de Marketing (Meta y TikTok)</h2>
+                    <p class="text-sm text-slate-700">Los leads son contactos comerciales nuevos originados por las campañas publicitarias de Vivibox.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-3">
+                            <h4 class="font-bold text-indigo-800 text-sm uppercase tracking-wide">Filtros Excluyentes (Paso 1)</h4>
+                            <ul class="text-xs text-slate-600 space-y-2">
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✔</span> <strong>Disponibilidad:</strong> Estado 'disponible' en Flowdex.</li>
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✔</span> <strong>Capacidad:</strong> Menor a 200 conversaciones simultáneas.</li>
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✔</span> <strong>Certificación de Producto:</strong> Habilitado en la categoría anunciada.</li>
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✔</span> <strong>SLA de Contacto:</strong> Compromiso de contacto en 5 a 15 min.</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-3">
+                            <h4 class="font-bold text-purple-800 text-sm uppercase tracking-wide">Ponderación del Algoritmo (Paso 2)</h4>
+                            <div class="space-y-2 text-xs">
+                                <div class="bg-indigo-50 p-2.5 rounded-lg border border-indigo-200 text-indigo-950">
+                                    <div class="flex justify-between font-bold mb-1">
+                                        <span>Equidad (Round Robin)</span>
+                                        <span class="text-indigo-600">60% de peso</span>
+                                    </div>
+                                    <p class="text-slate-600">Distribución por turnos correlativos para garantizar oportunidades a todo el equipo.</p>
+                                </div>
+                                <div class="bg-purple-50 p-2.5 rounded-lg border border-purple-200 text-purple-950">
+                                    <div class="flex justify-between font-bold mb-1">
+                                        <span>Desempeño / Conversión</span>
+                                        <span class="text-purple-600">40% de peso</span>
+                                    </div>
+                                    <p class="text-slate-600">Tasa de cierre de ventas en los últimos 30 a 60 días para premiar eficacia.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. Límites de Trabajo -->
+                <section id="sec-6" class="space-y-4 pt-4 border-t border-slate-100">
+                    <h2 class="text-2xl font-bold text-slate-900 pb-2 border-b-2 border-indigo-500">6. Límites de Trabajo por Asesor</h2>
+                    <p class="text-sm text-slate-700">Para salvaguardar la calidad y evitar el agotamiento de los asesores, se aplican los siguientes topes técnicos:</p>
+                    
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-100 text-slate-800 font-semibold">
+                                <tr>
+                                    <th class="p-3">Tipo de Límite</th>
+                                    <th class="p-3">Cantidad Máxima</th>
+                                    <th class="p-3">Consecuencia al Superarlo</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 text-slate-700">
+                                <tr>
+                                    <td class="p-3 font-medium">Conversaciones sin respuesta inicial</td>
+                                    <td class="p-3 font-bold text-rose-600">5 máximo</td>
+                                    <td class="p-3 text-xs">Se suspende la asignación automática hasta que responda los casos pendientes.</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-medium">Conversaciones activas (totales simultáneas)</td>
+                                    <td class="p-3 font-bold text-indigo-600">200 máximo</td>
+                                    <td class="p-3 text-xs">Pausa nuevas asignaciones de WhatsApp o campañas hasta cerrar o archivar gestiones.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 7. Alertas -->
+                <section id="sec-7" class="space-y-4 pt-4 border-t border-slate-100">
+                    <h2 class="text-2xl font-bold text-slate-900 pb-2 border-b-2 border-indigo-500">7. Alertas y Escalamientos</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div class="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900">
+                            <strong>80% del SLA consumido:</strong> Alerta preventiva visual al asesor y al monitor de cola.
+                        </div>
+                        <div class="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-900">
+                            <strong>100% del SLA (Vencida):</strong> Alerta de escalamiento al supervisor y flag de prioridad urgente.
+                        </div>
+                        <div class="p-3 rounded-lg bg-red-100 border border-red-300 text-red-950 font-semibold">
+                            <strong>P1 vencida:</strong> Aviso crítico inmediato al administrador de guardia para reasignación manual.
+                        </div>
+                        <div class="p-3 rounded-lg bg-purple-50 border border-purple-200 text-purple-900">
+                            <strong>Saturación de equipo:</strong> Notificación global con el conteo de casos en cola y minutos de espera promedio.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 8. Indicadores -->
+                <section id="sec-8" class="space-y-4 pt-4 border-t border-slate-100">
+                    <h2 class="text-2xl font-bold text-slate-900 pb-2 border-b-2 border-indigo-500">8. Medidas de Éxito (Indicadores Clave)</h2>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-xs">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-indigo-700 text-white font-semibold">
+                                <tr>
+                                    <th class="p-3">Indicador</th>
+                                    <th class="p-3">¿Qué mide?</th>
+                                    <th class="p-3">Meta Inicial</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 text-slate-700 text-xs">
+                                <tr>
+                                    <td class="p-3 font-bold text-slate-900">Primera Respuesta (FRT)</td>
+                                    <td class="p-3">Minutos desde el primer mensaje hasta la primera respuesta de asesor humano.</td>
+                                    <td class="p-3 font-semibold text-emerald-700">P1/P2 ≤ 5m | P3 ≤ 15m | P4 ≤ 30m</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-bold text-slate-900">Cumplimiento de SLA</td>
+                                    <td class="p-3">% de casos respondidos dentro del tiempo estipulado.</td>
+                                    <td class="p-3 font-semibold text-emerald-700">≥ 90% general | ≥ 95% en P1/P2</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-bold text-slate-900">Conversaciones En Riesgo</td>
+                                    <td class="p-3">% de casos sin respuesta que llegaron al 80% del tiempo permitido.</td>
+                                    <td class="p-3 font-semibold text-amber-700">&lt; 5% del total</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-bold text-slate-900">Conversaciones Vencidas</td>
+                                    <td class="p-3">% de casos sin respuesta transcurrido el tiempo SLA.</td>
+                                    <td class="p-3 font-semibold text-rose-700">0 en P1/P2 | &lt; 10% global</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-bold text-slate-900">Tasa de Reasignación</td>
+                                    <td class="p-3">% de casos que debieron cambiarse de asesor.</td>
+                                    <td class="p-3 font-semibold text-blue-700">&lt; 5% (salvo cobertura programada)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 9. Glosario -->
+                <section id="sec-9" class="space-y-4 pt-4 border-t border-slate-100">
+                    <h2 class="text-2xl font-bold text-slate-900 pb-2 border-b-2 border-indigo-500">9. Glosario de Términos</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-700">
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <span class="font-bold text-indigo-700 block mb-1">SLA (Service Level Agreement)</span>
+                            <p class="text-slate-600">Tiempo límite tolerado para atender a un usuario desde su contacto hasta la respuesta humana.</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <span class="font-bold text-indigo-700 block mb-1">FRT (First Response Time)</span>
+                            <p class="text-slate-600">Tiempo de la primera intervención de un asesor de carne y hueso (excluye respuestas automáticas).</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <span class="font-bold text-indigo-700 block mb-1">Lead de Campaña</span>
+                            <p class="text-slate-600">Prospecto interesado derivado de un anuncio de Meta (Facebook/Instagram) o TikTok Ads.</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <span class="font-bold text-indigo-700 block mb-1">Round Robin</span>
+                            <p class="text-slate-600">Mecanismo rotativo y secuencial para entregar equitativamente una conversación a cada asesor.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 10. Responsabilidades y Cambios -->
+                <section id="sec-10" class="space-y-4 pt-4 border-t border-slate-100">
+                    <h2 class="text-2xl font-bold text-slate-900 pb-2 border-b-2 border-indigo-500">10. Responsables y Cambios Futuros</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div class="p-3 bg-white border border-slate-200 rounded-lg shadow-2xs">
+                            <strong class="text-indigo-800 block mb-1">Administrador Flowdex</strong>
+                            <p class="text-slate-600">Monitoreo de alertas, gestión de excepciones de turno y reasignación de P1 en riesgo.</p>
+                        </div>
+                        <div class="p-3 bg-white border border-slate-200 rounded-lg shadow-2xs">
+                            <strong class="text-purple-800 block mb-1">Equipo de Asesores</strong>
+                            <p class="text-slate-600">Gestión ágil dentro de SLA, reclasificación de urgencia y tipificación clara de cierres.</p>
+                        </div>
+                        <div class="p-3 bg-white border border-slate-200 rounded-lg shadow-2xs">
+                            <strong class="text-slate-800 block mb-1">Jefatura Comercial</strong>
+                            <p class="text-slate-600">Auditoría semanal de desvíos, calibración de topes y balance de pesos de desempeño.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Pendientes antes de activar -->
+                <div class="p-5 bg-amber-50/80 rounded-xl border border-amber-300 text-xs text-amber-950 space-y-2">
+                    <h4 class="font-bold text-sm text-amber-900 flex items-center gap-2">
+                        <span>⚠️</span> Check-list previo a activación total
+                    </h4>
+                    <ul class="list-disc pl-5 space-y-1 text-amber-900/90">
+                        <li>Fijar calendario de feriados oficiales y autorizaciones de sábados extendidos.</li>
+                        <li>Designar rol de guardia para P1 en caso de sobrecarga.</li>
+                        <li>Periodo de prueba de 2 a 4 semanas para calibrar el techo de 200 conversaciones.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-slate-50 border-t border-slate-200 p-6 text-center text-xs text-slate-500">
+                <p class="font-semibold text-slate-700">vivibox - check azul · Flowdex Operations</p>
+                <p class="mt-1">Documentación interna de gestión de SLA y asignación publicitaria · Versión 1.0</p>
+            </div>
+        </div>
+    </div>
+`;
+
+export const flowdexDocumentsList: FlowdexDocument[] = [
+  {
+    id: 'politica-sla-asignacion',
+    title: 'Política Integral de Flowdex',
+    subtitle: 'Atención, Prioridades y Asignación de Conversaciones y Leads',
+    version: '1.0',
+    year: '2026',
+    category: 'Politicas',
+    updatedAt: '2026-09-16',
+    fileUrl: '/flowdex.html',
+    htmlContent: initialFlowdexHTML,
+  },
+  {
+    id: 'manual-operativo-leads',
+    title: 'Manual Operativo de Leads Publicitarios',
+    subtitle: 'Guía de primer contacto para leads provenientes de Meta Ads y TikTok Ads',
+    version: '1.0',
+    year: '2026',
+    category: 'Manuales',
+    updatedAt: '2026-09-14',
+    fileUrl: '/flowdex.html#manual-leads',
+    htmlContent: `
+      <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl border border-slate-200 shadow-sm text-slate-800">
+        <h2 class="text-2xl font-bold text-indigo-700 mb-2">Manual Operativo: Primer Contacto con Leads</h2>
+        <p class="text-sm text-slate-500 mb-6">Procedimiento estandarizado para asesores comerciales Vivibox</p>
+        <div class="space-y-4 text-sm">
+          <div class="p-4 bg-indigo-50 rounded-lg border-l-4 border-indigo-600">
+            <h4 class="font-bold text-indigo-900">1. Saludo Personalizado dentro de los primeros 5 minutos</h4>
+            <p class="text-slate-700 mt-1">Identificar la campaña de procedencia (ej. Edición Primavera) y saludar al cliente por su nombre si viene en el formulario.</p>
+          </div>
+          <div class="p-4 bg-slate-50 rounded-lg border-l-4 border-purple-600">
+            <h4 class="font-bold text-purple-900">2. Identificación de Intención de Compra</h4>
+            <p class="text-slate-700 mt-1">Preguntar amablemente para qué fecha especial busca la Vivibox y si tiene destinatario en Lima o provincia.</p>
+          </div>
+          <div class="p-4 bg-slate-50 rounded-lg border-l-4 border-emerald-600">
+            <h4 class="font-bold text-emerald-900">3. Cierre y Link de Pago Seguro</h4>
+            <p class="text-slate-700 mt-1">Facilitar catálogo dinámico o link directo de checkout para concretar en el menor número de interacciones posible.</p>
+          </div>
+        </div>
+      </div>
+    `,
+  },
+  {
+    id: 'guia-respuestas-rapidas',
+    title: 'Guía de Respuestas Rápidas P1 y P2',
+    subtitle: 'Plantillas y protocolos para casos críticos de pago, envíos y compras inmediatas',
+    version: '1.2',
+    year: '2026',
+    category: 'Operaciones',
+    updatedAt: '2026-09-15',
+    fileUrl: '/flowdex.html#respuestas-rapidas',
+    htmlContent: `
+      <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl border border-slate-200 shadow-sm text-slate-800">
+        <h2 class="text-2xl font-bold text-blue-700 mb-2">Protocolos Rápidos P1 / P2</h2>
+        <p class="text-sm text-slate-500 mb-6">Manejo de objeciones y resolución inmediata bajo SLA de 5 minutos</p>
+        <div class="space-y-4 text-sm">
+          <div class="p-4 bg-rose-50 rounded-lg border border-rose-200">
+            <h4 class="font-bold text-rose-800">Caso P1: "Hice el pago pero no me llegó confirmación"</h4>
+            <p class="text-xs text-rose-900 mt-1"><strong>Script recomendado:</strong> "¡Hola [Nombre]! Con gusto lo verifico de inmediato en nuestro sistema de pagos. Por favor compárteme la captura o número de operación para validarlo en 2 minutos."</p>
+          </div>
+          <div class="p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <h4 class="font-bold text-amber-800">Caso P2: "Necesito que llegue hoy mismo, ¿es posible?"</h4>
+            <p class="text-xs text-amber-900 mt-1"><strong>Script recomendado:</strong> "¡Hola [Nombre]! Claro que sí, contamos con el servicio Express Vivibox para entregas el mismo día confirmando antes de las 14:00 hrs. ¿A qué distrito sería la entrega?"</p>
+          </div>
+        </div>
+      </div>
+    `,
+  }
+];
