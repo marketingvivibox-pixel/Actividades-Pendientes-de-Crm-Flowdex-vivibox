@@ -55,64 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Center Navigation Tabs */}
-          <nav className="flex items-center p-1 bg-black/20 backdrop-blur-xs rounded-xl border border-white/15 overflow-x-auto max-w-full">
-            {/* 1. Centro de Análisis (Inicio) */}
-            <button
-              id="nav-centro-analisis-btn"
-              onClick={() => setActiveSection('centro-de-analisis')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer whitespace-nowrap ${
-                activeSection === 'centro-de-analisis'
-                  ? 'bg-white text-[#18181b] shadow-md'
-                  : 'text-white/90 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <LayoutDashboard className={`w-4 h-4 ${activeSection === 'centro-de-analisis' ? 'text-[#ed1c24]' : 'text-white'}`} />
-              <span>Centro de Análisis</span>
-            </button>
-
-            {/* 2. Informes de Contenido */}
-            <button
-              id="nav-informes-btn"
-              onClick={() => setActiveSection('informes')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer whitespace-nowrap ${
-                activeSection === 'informes'
-                  ? 'bg-white text-[#18181b] shadow-md'
-                  : 'text-white/90 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <BarChart3 className={`w-4 h-4 ${activeSection === 'informes' ? 'text-[#ed1c24]' : 'text-white'}`} />
-              <span>Informes</span>
-            </button>
-
-            {/* 3. Flowdex */}
-            <button
-              id="nav-flowdex-btn"
-              onClick={() => setActiveSection('flowdex')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer whitespace-nowrap ${
-                activeSection === 'flowdex'
-                  ? 'bg-white text-[#18181b] shadow-md'
-                  : 'text-white/90 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <FileText className={`w-4 h-4 ${activeSection === 'flowdex' ? 'text-[#ed1c24]' : 'text-white'}`} />
-              <span>Flowdex</span>
-            </button>
-
-            {/* 4. Política Integral */}
-            <button
-              id="nav-politica-integral-btn"
-              onClick={() => setActiveSection('politicas')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer whitespace-nowrap ${
-                activeSection === 'politicas'
-                  ? 'bg-white text-[#18181b] shadow-md'
-                  : 'text-white/90 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <ShieldCheck className={`w-4 h-4 ${activeSection === 'politicas' ? 'text-[#ed1c24]' : 'text-white'}`} />
-              <span>Política Integral</span>
-            </button>
-          </nav>
+          {/* Center Navigation Tabs removed per user request */}
 
           {/* Right Action Tools */}
           <div className="flex items-center gap-2">
