@@ -9,7 +9,22 @@ import { BadgeCheck, ShieldCheck, ExternalLink } from 'lucide-react';
 export default function App() {
   // Default is 'centro-de-analisis'
   const [activeSection, setActiveSection] = useState<ActiveView>('centro-de-analisis');
+  const [informesSubSection, setInformesSubSection] = useState<'publicitario' | 'organico'>('publicitario');
+  const [flowdexSubSection, setFlowdexSubSection] = useState<'menu' | 'slas' | 'pendientes'>('menu');
   const [searchQuery] = useState<string>('');
+
+  const handleNavigate = (view: ActiveView, subSection?: string) => {
+    setActiveSection(view);
+    if (view === 'informes') {
+      if (subSection === 'organico') setInformesSubSection('organico');
+      else setInformesSubSection('publicitario');
+    }
+    if (view === 'flowdex') {
+      if (subSection === 'slas') setFlowdexSubSection('slas');
+      else if (subSection === 'pendientes') setFlowdexSubSection('pendientes');
+      else setFlowdexSubSection('menu');
+    }
+  };
 
   const isHome = activeSection === 'centro-de-analisis';
 
@@ -26,13 +41,14 @@ export default function App() {
       <main className={`flex-1 w-full ${isHome ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'}`}>
         {/* 1. Centro de Análisis (Portada Principal Minimalista con Casa 3D y 4 Módulos) */}
         {activeSection === 'centro-de-analisis' && (
-          <ReceptionHub onNavigate={(view) => setActiveSection(view)} />
+          <ReceptionHub onNavigate={handleNavigate} />
         )}
 
         {/* 2. Módulo A: Informes de Contenido Vivibox (Publicitario y Orgánico) */}
         {activeSection === 'informes' && (
           <ContentReportsHub
             searchQuery={searchQuery}
+            initialSubSection={informesSubSection}
             onBack={() => setActiveSection('centro-de-analisis')}
           />
         )}
@@ -41,6 +57,7 @@ export default function App() {
         {activeSection === 'flowdex' && (
           <FlowdexHub
             searchQuery={searchQuery}
+            initialSubSection={flowdexSubSection}
             onBack={() => setActiveSection('centro-de-analisis')}
           />
         )}

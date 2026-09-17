@@ -61,6 +61,12 @@ export const ContentReportsHub: React.FC<ContentReportsHubProps> = ({
   initialSubSection = 'publicitario',
 }) => {
   const [activeSubSection, setActiveSubSection] = useState<InformesSubSection>(initialSubSection);
+
+  React.useEffect(() => {
+    if (initialSubSection) {
+      setActiveSubSection(initialSubSection);
+    }
+  }, [initialSubSection]);
   const [selectedInteractiveReport, setSelectedInteractiveReport] = useState<'meta' | 'tiktok' | null>(null);
   const [organicReports, setOrganicReports] = useState<HostedReport[]>([]);
   const [showAddOrganicModal, setShowAddOrganicModal] = useState(false);

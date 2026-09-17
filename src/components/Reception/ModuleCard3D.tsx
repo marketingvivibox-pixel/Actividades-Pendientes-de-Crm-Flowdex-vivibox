@@ -10,6 +10,7 @@ interface ModuleCard3DProps {
   icon: React.ReactNode;
   accentColor: string;
   onOpen: () => void;
+  onSubdivisionClick?: (subdivision: string) => void;
 }
 
 export const ModuleCard3D: React.FC<ModuleCard3DProps> = ({
@@ -21,22 +22,22 @@ export const ModuleCard3D: React.FC<ModuleCard3DProps> = ({
   icon,
   accentColor,
   onOpen,
+  onSubdivisionClick,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotateX, setRotateX] = useState<number>(0);
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const [isFocused, setIsFocused] = useState<boolean>(false);
 
-  // Mouse move handler strictly constrained to X-axis rotation between -4deg and 4deg
+  // Controlled subtle tilt on X-axis strictly within [-4deg, 4deg]
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const y = e.clientY - rect.top;
     const centerY = rect.height / 2;
 
-    // Controlled rotation around X axis strictly within [-4deg, 4deg]
-    const rawRotX = -((y - centerY) / centerY) * 4;
-    const clampedRotX = Math.max(-4, Math.min(4, rawRotX));
+    const rawRotX = -((y - centerY) / centerY) * 3.5;
+    const clampedRotX = Math.max(-3.5, Math.min(3.5, rawRotX));
     setRotateX(clampedRotX);
   };
 
@@ -56,13 +57,12 @@ export const ModuleCard3D: React.FC<ModuleCard3DProps> = ({
     }
   };
 
-  // Staggered delay for floating wave
   const floatDelay = `${index * 0.75}s`;
   const activeFocus = isHovered || isFocused;
 
   return (
     <div
-      className="perspective-container relative w-full aspect-square min-h-[310px] sm:min-h-[330px]"
+      className="perspective-container relative w-full h-full min-h-[340px] sm:min-h-[360px]"
       style={{ perspective: '1100px' }}
     >
       <div
@@ -84,40 +84,38 @@ export const ModuleCard3D: React.FC<ModuleCard3DProps> = ({
         style={{
           transformStyle: 'preserve-3d',
           transform: activeFocus
-            ? `rotateX(${rotateX * 0.5}deg) translateZ(20px) translateY(-4px)`
+            ? `rotateX(${rotateX * 0.5}deg) translateZ(18px) translateY(-4px)`
             : `rotateX(0deg) translateZ(0px)`,
           animation: activeFocus ? 'none' : 'cardFloat3D 6s ease-in-out infinite',
           animationDelay: floatDelay,
           boxShadow: activeFocus
-            ? `0 24px 38px -10px rgba(0, 0, 0, 0.09), 0 0 0 1px ${accentColor}33`
-            : `0 8px 20px -6px rgba(0, 0, 0, 0.04)`,
+            ? `0 24px 38px -10px rgba(0, 0, 0, 0.08), 0 0 0 1px ${accentColor}33`
+            : `0 8px 20px -6px rgba(0, 0, 0, 0.03)`,
         }}
       >
-        {/* Dynamic Light Sheen overlay */}
+        {/* Dynamic Sheen overlay on hover */}
         <div
           className="absolute inset-0 rounded-3xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           style={{
-            background: `radial-gradient(circle at 50% 20%, ${accentColor}12 0%, transparent 70%)`,
+            background: `radial-gradient(circle at 50% 15%, ${accentColor}10 0%, transparent 70%)`,
           }}
         />
 
-        {/* 1. Top Area: Visual Identifier / Icon & Category Badge */}
+        {/* 1. TOP ZONE: Badge and Icon with aligned baseline */}
         <div className="flex items-start justify-between z-10">
-          <div className="flex flex-col gap-1">
-            <span
-              className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full border shadow-2xs"
-              style={{
-                backgroundColor: `${accentColor}10`,
-                borderColor: `${accentColor}30`,
-                color: accentColor,
-              }}
-            >
-              {badge}
-            </span>
-          </div>
+          <span
+            className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full border shadow-2xs"
+            style={{
+              backgroundColor: `${accentColor}10`,
+              borderColor: `${accentColor}30`,
+              color: accentColor,
+            }}
+          >
+            {badge}
+          </span>
 
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center border border-black/5 shadow-xs transition-transform duration-300 group-hover:scale-110"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center border border-black/5 shadow-xs transition-transform duration-300 group-hover:scale-110 shrink-0"
             style={{
               backgroundColor: `${accentColor}12`,
               color: accentColor,
@@ -128,38 +126,56 @@ export const ModuleCard3D: React.FC<ModuleCard3DProps> = ({
           </div>
         </div>
 
-        {/* 2. Center Area: Title & Short Description */}
+        {/* 2. CENTER ZONE: Structured with fixed vertical rhythm so all cards align harmoniously */}
         <div
-          className="my-auto py-2 z-10 transition-transform duration-300"
+          className="flex-1 flex flex-col justify-center py-4 z-10 transition-transform duration-300"
           style={{ transform: activeFocus ? 'translateZ(22px)' : 'none' }}
         >
-          <h3 className="text-xl sm:text-2xl font-black text-[#18181b] tracking-tight mb-2 leading-tight group-hover:text-[#ed1c24] transition-colors">
-            {title}
-          </h3>
+          {/* Title with fixed minimum height for horizontal alignment across the grid */}
+          <div className="min-h-[3.25rem] flex items-center mb-1.5">
+            <h3 className="text-xl sm:text-2xl font-black text-[#18181b] tracking-tight leading-tight group-hover:text-[#ed1c24] transition-colors line-clamp-2">
+              {title}
+            </h3>
+          </div>
 
-          <p className="text-xs sm:text-sm text-[#5f6470] line-clamp-2 leading-relaxed mb-3">
-            {subtitle}
-          </p>
+          {/* Subtitle with fixed minimum height */}
+          <div className="min-h-[2.5rem] mb-3">
+            <p className="text-xs sm:text-sm text-[#5f6470] line-clamp-2 leading-relaxed">
+              {subtitle}
+            </p>
+          </div>
 
-          {/* Subdivisions pills if provided */}
-          {subdivisions.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {subdivisions.map((sub, i) => (
-                <span
-                  key={i}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-[#f4f4f6] text-[#5f6470] border border-[#dedfe3]"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accentColor }} />
-                  {sub}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Subdivisions pills with uniform height and interactive clickability */}
+          <div className="min-h-[2.25rem] flex items-center">
+            {subdivisions.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {subdivisions.map((sub, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={(e) => {
+                      if (onSubdivisionClick) {
+                        e.stopPropagation();
+                        onSubdivisionClick(sub);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#f4f4f6] hover:bg-white text-[#44403c] border border-[#dedfe3] hover:border-black/20 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+                    title={`Ir directamente a ${sub}`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: accentColor }} />
+                    <span className="truncate max-w-[150px]">{sub}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="h-6" />
+            )}
+          </div>
         </div>
 
-        {/* 3. Bottom Area: Prominent & Accessible 'Abrir' Button */}
+        {/* 3. BOTTOM ZONE: 'Pantalla completa' & Prominent 'Abrir' button at exact same baseline */}
         <div
-          className="pt-4 border-t border-[#dedfe3]/70 z-10 flex items-center justify-between transition-transform duration-300"
+          className="pt-4 border-t border-[#dedfe3]/70 z-10 flex items-center justify-between transition-transform duration-300 mt-auto"
           style={{ transform: activeFocus ? 'translateZ(26px)' : 'none' }}
         >
           <span className="text-xs font-semibold text-[#5f6470]">
@@ -168,6 +184,7 @@ export const ModuleCard3D: React.FC<ModuleCard3DProps> = ({
 
           <button
             id={`btn-abrir-modulo-${index}`}
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onOpen();

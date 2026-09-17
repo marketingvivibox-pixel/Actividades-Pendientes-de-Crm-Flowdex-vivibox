@@ -12,17 +12,20 @@ import {
   Check,
   ShieldCheck,
   BadgeCheck,
-  ExternalLink
+  ExternalLink,
+  Flame
 } from 'lucide-react';
 
 interface PoliticaIntegralFullScreenProps {
   onClose: () => void;
   initialEditable?: boolean;
+  onSwitchToCrm?: () => void;
 }
 
 export const PoliticaIntegralFullScreen: React.FC<PoliticaIntegralFullScreenProps> = ({
   onClose,
   initialEditable = false,
+  onSwitchToCrm,
 }) => {
   const [htmlContent, setHtmlContent] = useState<string>(() => {
     const saved = localStorage.getItem('vivibox_politica_integral_content_v2');
@@ -125,11 +128,11 @@ export const PoliticaIntegralFullScreen: React.FC<PoliticaIntegralFullScreenProp
           <button
             onClick={onClose}
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/15 transition-all cursor-pointer shrink-0"
-            title="Salir de pantalla completa (o pulsa ESC)"
+            title="Volver al Menú Flowdex (o pulsa ESC)"
           >
             <ArrowLeft className="w-4 h-4 text-[#ed1c24]" />
-            <span className="hidden sm:inline">Salir de Pantalla Completa</span>
-            <span className="sm:hidden">Salir</span>
+            <span className="hidden sm:inline">Volver a Flowdex</span>
+            <span className="sm:hidden">Volver</span>
           </button>
 
           <div className="h-4 w-px bg-white/20 hidden sm:block shrink-0" />
@@ -140,10 +143,10 @@ export const PoliticaIntegralFullScreen: React.FC<PoliticaIntegralFullScreenProp
             </div>
             <div className="truncate">
               <h1 className="text-sm sm:text-base font-black tracking-tight text-white truncate">
-                Política Integral de Flowdex
+                Políticas del SLA
               </h1>
               <p className="text-[11px] text-white/60 font-medium hidden md:block">
-                Atención, Prioridades y Asignación de Conversaciones y Leads · Vivibox
+                Marco Integral de Gobernanza, Atención y Tiempos de Respuesta · Vivibox
               </p>
             </div>
           </div>
@@ -151,6 +154,16 @@ export const PoliticaIntegralFullScreen: React.FC<PoliticaIntegralFullScreenProp
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2 shrink-0">
+          {onSwitchToCrm && (
+            <button
+              onClick={onSwitchToCrm}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#27272a] hover:bg-[#3f3f46] text-amber-300 border border-amber-400/30 transition-all cursor-pointer"
+              title="Ir a Pendientes de CRM FLOWDEX"
+            >
+              <Flame className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden md:inline">Pendientes de CRM</span>
+            </button>
+          )}
           <button
             onClick={() => setIsEditable(!isEditable)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${

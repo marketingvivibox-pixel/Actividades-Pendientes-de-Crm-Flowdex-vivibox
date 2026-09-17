@@ -130,3 +130,27 @@ body {
   }
 }
 
+.font-serif-warm {
+  font-family: 'Fraunces', Georgia, Cambria, serif;
+}
+
+.canvas-sandy {
+  background-color: #f6f3ed;
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245, 235, 220, 0.9), transparent),
+    radial-gradient(ellipse 60% 50% at 90% 30%, rgba(238, 228, 212, 0.6), transparent),
+    radial-gradient(ellipse 60% 50% at 10% 70%, rgba(244, 233, 218, 0.5), transparent);
+}
+
+.canvas-sand-dune {
+  background-color: #efe9df;
+  background-image: 
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(248, 243, 234, 0.8), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 80%, rgba(230, 219, 203, 0.6), transparent);
+}
+
+.canvas-warm-linen {
+  background-color: #faf8f5;
+}
+
+

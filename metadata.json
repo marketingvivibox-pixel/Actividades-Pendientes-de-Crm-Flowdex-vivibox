@@ -1,6 +1,6 @@
 {
   "name": "vivibox - check azul",
-  "description": "Plataforma de gestión e informes de Vivibox: Informes de contenido (Orgánico y Publicitario) y documentación operativa de Flowdex.",
+  "description": "Centro de Análisis Vivibox: Plataforma centralizada de inteligencia y operaciones con informes de contenido, políticas del SLA y seguimiento de pendientes de CRM FLOWDEX.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
