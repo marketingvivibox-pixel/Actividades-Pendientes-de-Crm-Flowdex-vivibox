@@ -61,6 +61,9 @@ export const DecokasaHouse3D: React.FC<DecokasaHouse3DProps> = ({
     const ambientLight = new THREE.AmbientLight(0xfffbeb, 1.4);
     scene.add(ambientLight);
 
+    // Subtle atmospheric progressive depth fog matching canvas background (#f7f7f8)
+    scene.fog = new THREE.FogExp2(0xf7f7f8, 0.016);
+
     // Key Light: Warm bright sunlight from top-left
     const keyLight = new THREE.DirectionalLight(0xfffaed, 2.6);
     keyLight.position.set(6, 9, 7);
@@ -81,12 +84,13 @@ export const DecokasaHouse3D: React.FC<DecokasaHouse3DProps> = ({
     scene.add(fillLight);
 
     // Subtle warm point light under the roof apex
-    const warmGlow = new THREE.PointLight(0xf59e0b, 2.2, 7);
+    const warmGlow = new THREE.PointLight(0xf59e0b, 2.6, 9);
     warmGlow.position.set(0, 0.3, 1.2);
     scene.add(warmGlow);
 
-    // 5. Main Logo Group
+    // 5. Main Logo Group (Scaled +50% for high-resolution 3D volume)
     const logoGroup = new THREE.Group();
+    logoGroup.scale.set(1.5, 1.5, 1.5);
     scene.add(logoGroup);
 
     // --- DECOKASA BRAND GOLDEN MATERIALS ---
@@ -190,8 +194,8 @@ export const DecokasaHouse3D: React.FC<DecokasaHouse3DProps> = ({
       logoGroup.add(pane);
     });
 
-    // Soft architectural shadow floor disc
-    const shadowDiscGeom = new THREE.CircleGeometry(2.8, 36);
+    // Soft architectural shadow floor disc (scaled with 3D model)
+    const shadowDiscGeom = new THREE.CircleGeometry(2.8 * 1.5, 36);
     const shadowDiscMat = new THREE.MeshBasicMaterial({
       color: 0x18181b,
       transparent: true,
@@ -199,7 +203,7 @@ export const DecokasaHouse3D: React.FC<DecokasaHouse3DProps> = ({
     });
     const shadowDisc = new THREE.Mesh(shadowDiscGeom, shadowDiscMat);
     shadowDisc.rotation.x = -Math.PI / 2;
-    shadowDisc.position.set(0, -1.2, 0);
+    shadowDisc.position.set(0, -1.75, 0);
     scene.add(shadowDisc);
 
     // Initial orientation: slightly turned to showcase 3D volume
@@ -285,9 +289,9 @@ export const DecokasaHouse3D: React.FC<DecokasaHouse3DProps> = ({
       animationFrameId = requestAnimationFrame(animate);
       const elapsedTime = clock.getElapsedTime();
 
-      // Gentle continuous floating motion
+      // Gentle continuous floating motion with lower baseline
       const floatOffsetY = Math.sin(elapsedTime * 1.5) * 0.08;
-      logoGroup.position.y = floatOffsetY;
+      logoGroup.position.y = -0.2 + floatOffsetY;
 
       // Auto rotation drift when user is not actively interacting
       if (!isDragging) {
