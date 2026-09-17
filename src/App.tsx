@@ -1,39 +1,35 @@
 import React, { useState } from 'react';
 import { ActiveView } from './types';
-import { Header } from './components/Header';
 import { ReceptionHub } from './components/Reception/ReceptionHub';
 import { ContentReportsHub } from './components/ContentReports/ContentReportsHub';
 import { FlowdexHub } from './components/Flowdex/FlowdexHub';
-import { PoliticaIntegralFullScreen } from './components/Flowdex/PoliticaIntegralFullScreen';
 import { SuspensionDots3D } from './components/Three/SuspensionDots3D';
 import { BadgeCheck, ShieldCheck, ExternalLink } from 'lucide-react';
 
 export default function App() {
-  // Default is 'centro-de-analisis' (the new reception panel with 3D house and 3D modules)
+  // Default is 'centro-de-analisis'
   const [activeSection, setActiveSection] = useState<ActiveView>('centro-de-analisis');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery] = useState<string>('');
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const isHome = activeSection === 'centro-de-analisis';
 
   return (
-    <div className="min-h-screen text-[#18181b] flex flex-col selection:bg-[#ed1c24] selection:text-white bg-[#f7f7f8]">
-      {/* Navigation Topbar with authentic Vivibox red and logo */}
-      <Header
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onPrint={handlePrint}
-      />
+    <div className="min-h-[100dvh] text-[#18181b] flex flex-col selection:bg-[#ed1c24] selection:text-white bg-[#f7f7f8] relative">
+      
+      {/* 
+        NO TOP MENU BAR:
+        Per specification, the main portal and internal views do not have a top navigation bar.
+        Logo is displayed discreetly in the top-left of the portal without a traditional solid strip.
+      */}
 
-      {/* Main Full-Screen Layout Shell */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      {/* Main Content Area */}
+      <main className={`flex-1 w-full ${isHome ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'}`}>
+        {/* 1. Centro de Análisis (Portada Principal Minimalista con Casa 3D y 4 Módulos) */}
         {activeSection === 'centro-de-analisis' && (
           <ReceptionHub onNavigate={(view) => setActiveSection(view)} />
         )}
 
+        {/* 2. Módulo A: Informes de Contenido Vivibox (Publicitario y Orgánico) */}
         {activeSection === 'informes' && (
           <ContentReportsHub
             searchQuery={searchQuery}
@@ -41,6 +37,7 @@ export default function App() {
           />
         )}
 
+        {/* 3. Módulo B: Flowdex (Políticas de SLA y Pendientes de Ejecución CRM) */}
         {activeSection === 'flowdex' && (
           <FlowdexHub
             searchQuery={searchQuery}
@@ -48,12 +45,16 @@ export default function App() {
           />
         )}
 
+        {/* 4. Módulo C: Políticas (Pantalla completa con 3 Puntos 3D y "En construcción") */}
         {activeSection === 'politicas' && (
-          <PoliticaIntegralFullScreen
-            onClose={() => setActiveSection('centro-de-analisis')}
+          <SuspensionDots3D
+            moduleTitle="Políticas"
+            subtitle="Marco regulatorio, directrices operativas y acuerdos de cumplimiento de Vivibox."
+            onBack={() => setActiveSection('centro-de-analisis')}
           />
         )}
 
+        {/* 5. Módulo D: Misión, Visión y Marca (Pantalla completa con 3 Puntos 3D y "En construcción") */}
         {activeSection === 'mision-vision' && (
           <SuspensionDots3D
             moduleTitle="Misión, Visión y Marca"
@@ -63,9 +64,9 @@ export default function App() {
         )}
       </main>
 
-      {/* Official Footer matching vivibox-analisis.firebaseapp.com */}
-      <footer className="mt-auto border-t border-[#dedfe3] bg-white/80 backdrop-blur-xs py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#5f6470]">
+      {/* Discreet Official Footer */}
+      <footer className="mt-auto border-t border-[#dedfe3] bg-white/70 backdrop-blur-xs py-4 px-4 sm:px-8">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5f6470]">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-black text-[#18181b] flex items-center gap-1.5">
               vivibox
@@ -74,12 +75,12 @@ export default function App() {
                 check azul
               </span>
             </span>
-            <span>· Centro de Análisis, Informes & Gobernanza Operativa</span>
+            <span>· Centro de Análisis</span>
           </div>
 
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1 text-[#5f6470]">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> SLA Oficial Flowdex 2026
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Vivibox 2026
             </span>
             <span className="text-[#dedfe3]">|</span>
             <a
