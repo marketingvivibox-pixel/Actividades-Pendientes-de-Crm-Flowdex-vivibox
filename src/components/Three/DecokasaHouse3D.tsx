@@ -61,9 +61,6 @@ export const DecokasaHouse3D: React.FC<DecokasaHouse3DProps> = ({
     const ambientLight = new THREE.AmbientLight(0xfffbeb, 1.4);
     scene.add(ambientLight);
 
-    // Subtle atmospheric progressive depth fog matching canvas background (#f7f7f8)
-    scene.fog = new THREE.FogExp2(0xf7f7f8, 0.016);
-
     // Key Light: Warm bright sunlight from top-left
     const keyLight = new THREE.DirectionalLight(0xfffaed, 2.6);
     keyLight.position.set(6, 9, 7);

@@ -59,27 +59,14 @@ export const ReceptionHub: React.FC<ReceptionHubProps> = ({ onNavigate }) => {
         className="hidden md:block absolute top-0 right-0 w-[62vw] max-w-[880px] h-[72vh] min-h-[560px] pointer-events-auto z-0 overflow-hidden"
         style={{
           transform: 'translateX(4%) translateY(7%)',
+          /* Desvanecimiento progresivo en transparencia pura hacia todos los extremos (arriba, abajo, izquierda, derecha) */
           maskImage:
-            'radial-gradient(ellipse 80% 75% at 62% 48%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 62%, rgba(0,0,0,0.3) 82%, transparent 100%), linear-gradient(to left, rgba(0,0,0,1) 62%, rgba(0,0,0,0.4) 86%, transparent 100%), linear-gradient(to bottom, rgba(0,0,0,1) 65%, rgba(0,0,0,0.35) 88%, transparent 100%)',
+            'radial-gradient(ellipse 70% 65% at 58% 50%, rgba(0,0,0,1) 20%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.4) 65%, rgba(0,0,0,0.1) 82%, transparent 100%)',
           WebkitMaskImage:
-            'radial-gradient(ellipse 80% 75% at 62% 48%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 62%, rgba(0,0,0,0.3) 82%, transparent 100%), linear-gradient(to left, rgba(0,0,0,1) 62%, rgba(0,0,0,0.4) 86%, transparent 100%), linear-gradient(to bottom, rgba(0,0,0,1) 65%, rgba(0,0,0,0.35) 88%, transparent 100%)',
+            'radial-gradient(ellipse 70% 65% at 58% 50%, rgba(0,0,0,1) 20%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.4) 65%, rgba(0,0,0,0.1) 82%, transparent 100%)',
         }}
         aria-label="Logo 3D Decokasa"
       >
-        {/* Capa de difuminado progresivo periférico (backdrop blur gradual hacia los bordes) */}
-        {/* pointer-events-none garantiza que el arrastre y la rotación 3D sigan respondiendo al 100% */}
-        <div
-          className="absolute inset-0 pointer-events-none z-10"
-          style={{
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            maskImage:
-              'radial-gradient(ellipse 65% 60% at 60% 48%, transparent 35%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.85) 82%, black 100%)',
-            WebkitMaskImage:
-              'radial-gradient(ellipse 65% 60% at 60% 48%, transparent 35%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.85) 82%, black 100%)',
-          }}
-        />
-
         <DecokasaHouse3D interactive={true} />
       </div>
 
@@ -108,22 +95,19 @@ export const ReceptionHub: React.FC<ReceptionHubProps> = ({ onNavigate }) => {
             Plataforma centralizada de inteligencia y operaciones. Consulta el rendimiento publicitario, el marco normativo de SLAs y la mesa técnica de seguimiento CRM.
           </p>
 
-          {/* MOBILE DEDICATED 3D DECOKASA SHOWCASE (50% ampliado con difuminado progresivo e interacción táctil completa) */}
+          {/* MOBILE DEDICATED 3D DECOKASA SHOWCASE (50% ampliado con difuminado progresivo hacia extremos e interacción táctil completa) */}
           <div className="md:hidden pt-2">
-            <div className="relative w-full h-64 sm:h-72 rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-white border border-amber-300/40 p-3 shadow-xs overflow-hidden">
+            <div
+              className="relative w-full h-64 sm:h-72 rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-white border border-amber-300/40 p-3 shadow-xs overflow-hidden"
+              style={{
+                maskImage:
+                  'radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 65%, rgba(0,0,0,0.3) 85%, transparent 100%)',
+                WebkitMaskImage:
+                  'radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 65%, rgba(0,0,0,0.3) 85%, transparent 100%)',
+              }}
+            >
               {/* Background ambient glow */}
               <div className="absolute -top-10 -right-10 w-48 h-48 bg-amber-400/20 rounded-full blur-2xl pointer-events-none" />
-              
-              {/* Capa de difuminado progresivo perimetral en móvil sin bloquear interacción táctil */}
-              <div
-                className="absolute inset-0 pointer-events-none z-10"
-                style={{
-                  backdropFilter: 'blur(6px)',
-                  WebkitBackdropFilter: 'blur(6px)',
-                  maskImage: 'radial-gradient(circle at 50% 50%, transparent 45%, rgba(0,0,0,0.3) 65%, black 100%)',
-                  WebkitMaskImage: 'radial-gradient(circle at 50% 50%, transparent 45%, rgba(0,0,0,0.3) 65%, black 100%)',
-                }}
-              />
 
               {/* Top badge */}
               <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md border border-amber-200 text-[11px] font-black text-amber-800 shadow-2xs">
