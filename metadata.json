@@ -1,0 +1,6 @@
+{
+  "name": "Matriz de Criticidad CRM WhatsApp",
+  "description": "Dashboard interactivo con físicas en 3D (X, Y, Z) con arrastre tridimensional y magnetismo por afinidad temática, edición de parámetros, observaciones y prioridades, alta y reordenamiento de pendientes para reuniones, y sincronización con Google Sheets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
