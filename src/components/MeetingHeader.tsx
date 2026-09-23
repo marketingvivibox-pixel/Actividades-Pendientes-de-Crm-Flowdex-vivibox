@@ -19,6 +19,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { MEETING_PARTICIPANTS } from '../data/crmTasksData';
 import { ConnectedSpreadsheet } from '../types';
+import { TeamMember } from './TeamAuthModal';
 
 interface MeetingHeaderProps {
   onToggleAll: (activate: boolean) => void;
@@ -33,7 +34,10 @@ interface MeetingHeaderProps {
   onToggleAllExpanded: () => void;
   connectedSheet?: ConnectedSpreadsheet | null;
   onTriggerSync?: () => void;
+  onPullSync?: () => void;
   isSyncing?: boolean;
+  teamUser?: TeamMember | null;
+  onOpenAuth?: () => void;
 }
 
 export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
@@ -49,7 +53,10 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
   onToggleAllExpanded,
   connectedSheet,
   onTriggerSync,
+  onPullSync,
   isSyncing = false,
+  teamUser,
+  onOpenAuth,
 }) => {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -131,30 +138,33 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
               <span>Reporte</span>
             </button>
 
-            {/* Google Sheets Workspace Integration */}
+            {/* Google Sheets Workspace Integration & Bidirectional Sync */}
             {connectedSheet ? (
               <div className="inline-flex items-center gap-1 bg-emerald-50/90 border border-emerald-300 rounded-xl p-0.5 shadow-2xs">
                 <button
                   id="btn-open-sheets"
                   type="button"
                   onClick={onOpenSheets}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-emerald-950 hover:text-emerald-800 transition-all cursor-pointer max-w-[160px] sm:max-w-[210px]"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-emerald-950 hover:text-emerald-800 transition-all cursor-pointer max-w-[140px] sm:max-w-[180px]"
                   title={`Hoja vinculada: ${connectedSheet.spreadsheetTitle} (${connectedSheet.sheetTabName}). Clic para ver opciones de sincronización.`}
                 >
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                   <span className="truncate">{connectedSheet.spreadsheetTitle}</span>
                 </button>
-                {onTriggerSync && (
+
+                {/* Bidirectional Sync: Pull from Google Sheets */}
+                {onPullSync && (
                   <button
                     type="button"
-                    onClick={onTriggerSync}
+                    onClick={onPullSync}
                     disabled={isSyncing}
                     className="p-1 rounded-lg text-emerald-800 hover:bg-emerald-200/70 transition-all cursor-pointer disabled:opacity-40"
-                    title={isSyncing ? 'Sincronizando con Google Sheets...' : 'Sincronizar ahora con Google Sheets'}
+                    title="Traer últimas modificaciones desde Google Sheets (Sincronización Bidireccional)"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-emerald-600' : ''}`} />
                   </button>
                 )}
+
                 {connectedSheet.spreadsheetUrl && (
                   <a
                     href={connectedSheet.spreadsheetUrl}
@@ -177,6 +187,32 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
               >
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
                 <span>Google Sheets</span>
+              </button>
+            )}
+
+            {/* Team User Account / Identification for Collaborative Edits */}
+            {onOpenAuth && (
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs ${
+                  teamUser
+                    ? 'bg-white hover:bg-stone-50 text-[#1c1917] border-[#d5c7b3]'
+                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300 animate-pulse'
+                }`}
+                title="Perfil de equipo para registrar modificaciones en el documento"
+              >
+                {teamUser ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="truncate max-w-[130px] sm:max-w-[160px] font-mono">{teamUser.email}</span>
+                  </>
+                ) : (
+                  <>
+                    <Users className="w-3.5 h-3.5 text-amber-700" />
+                    <span>Ingresar Correo</span>
+                  </>
+                )}
               </button>
             )}
 

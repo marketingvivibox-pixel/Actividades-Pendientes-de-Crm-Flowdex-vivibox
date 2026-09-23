@@ -114,8 +114,24 @@ export const SemanticFilterBar: React.FC<SemanticFilterBarProps> = ({
             </button>
           )}
 
-          {/* View Mode Switch (Tactile & Clean) */}
+          {/* View Mode Switch (Tabla is default and first) */}
           <div className="flex items-center gap-1 p-1 rounded-xl border border-[#e4dccf] bg-[#f7f3eb]">
+            <button
+              id="view-table-btn"
+              type="button"
+              onClick={() => onViewModeChange('table')}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'table'
+                  ? 'bg-[#292524] text-[#f6f3ed] shadow-2xs'
+                  : 'text-[#6d6152] hover:text-[#292524] hover:bg-[#ede5d8]'
+              }`}
+              title="Vista de Tabla Interactiva con reordenamiento y edición"
+            >
+              <Table className={`w-3.5 h-3.5 ${viewMode === 'table' ? 'text-amber-400' : 'text-[#8c7860]'}`} />
+              <span>Tabla</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            </button>
+
             <button
               id="view-3d-btn"
               type="button"
@@ -125,11 +141,10 @@ export const SemanticFilterBar: React.FC<SemanticFilterBarProps> = ({
                   ? 'bg-[#292524] text-[#f6f3ed] shadow-2xs'
                   : 'text-[#6d6152] hover:text-[#292524] hover:bg-[#ede5d8]'
               }`}
-              title="Universo 3D interactivo con movimiento en las 3 dimensiones (X, Y, Z)"
+              title="Sistema Planetario 3D con rotación axial, texturas cósmicas y anillos"
             >
               <Rotate3d className={`w-3.5 h-3.5 ${viewMode === '3d' ? 'text-amber-400 animate-spin-slow' : 'text-amber-600'}`} />
-              <span>3D Universo</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span>3D Planetas</span>
             </button>
 
             <button
@@ -160,21 +175,6 @@ export const SemanticFilterBar: React.FC<SemanticFilterBarProps> = ({
             >
               <BarChart3 className="w-3.5 h-3.5 text-amber-400" />
               <span className="hidden sm:inline">Proporcional</span>
-            </button>
-
-            <button
-              id="view-table-btn"
-              type="button"
-              onClick={() => onViewModeChange('table')}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'table'
-                  ? 'bg-[#292524] text-[#f6f3ed] shadow-2xs'
-                  : 'text-[#6d6152] hover:text-[#292524] hover:bg-[#ede5d8]'
-              }`}
-              title="Vista en tabla HTML"
-            >
-              <Table className="w-3.5 h-3.5 text-amber-400" />
-              <span>Tabla</span>
             </button>
 
             <button

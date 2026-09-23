@@ -48,6 +48,7 @@ const STATUSES: TaskStatus[] = [
 ];
 
 const COMMON_RESPONSIBLES = [
+  'Mayir (Operaciones / CRM)',
   'Alex (Software Factory)',
   'Freddy (Jefe Ventas)',
   'Antoinette (Procesos TI)',

@@ -6,6 +6,8 @@ import {
   getStoredConnectedSheet,
   setStoredConnectedSheet,
   pushTasksToSpreadsheet,
+  readSpreadsheetValues,
+  parseSpreadsheetRowsToTasks,
 } from './lib/googleSheetsService';
 import { MeetingHeader } from './components/MeetingHeader';
 import { ExecutiveMetrics } from './components/ExecutiveMetrics';
@@ -19,10 +21,13 @@ import { TaskDetailModal } from './components/TaskDetailModal';
 import { SemanticLegendModal } from './components/SemanticLegendModal';
 import { ExecutiveReportModal } from './components/ExecutiveReportModal';
 import { GoogleSheetsModal } from './components/GoogleSheetsModal';
+import { TeamAuthModal, TeamMember, PRESET_TEAM_MEMBERS } from './components/TeamAuthModal';
 import { AlertCircle, ArrowUp, ChevronsUpDown, CheckCircle2, ShieldCheck, Sparkles, Plus } from 'lucide-react';
 
 const STORAGE_KEY = 'crm_whatsapp_matrix_states_v3';
 const TASKS_STORAGE_KEY = 'crm_whatsapp_tasks_items_v2';
+const VIEW_MODE_STORAGE_KEY = 'vivibox_crm_view_mode_v2';
+const TEAM_USER_STORAGE_KEY = 'vivibox_team_user_v2';
 
 export default function App() {
   // Scroll animations & progress
@@ -100,7 +105,7 @@ export default function App() {
   });
 
   // Persistent Server Synchronization (works across multiple accounts, devices and browsers)
-  const saveTasksToServer = async (targetTasks: CRMTask[], targetStates: Record<number, boolean>) => {
+  const saveTasksToServer = async (targetTasks: CRMTask[], targetStates: Record<number, boolean>, modifiedBy?: string) => {
     setIsSaving(true);
     try {
       localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(targetTasks));
@@ -111,6 +116,7 @@ export default function App() {
         body: JSON.stringify({
           tasks: targetTasks,
           taskStates: targetStates,
+          modifiedBy: modifiedBy || teamUser?.email || 'marketingvivibox@gmail.com',
         }),
       });
     } catch (err) {
@@ -118,6 +124,43 @@ export default function App() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Team Authentication & Identity State
+  const [teamUser, setTeamUser] = useState<TeamMember | null>(() => {
+    try {
+      const saved = localStorage.getItem(TEAM_USER_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    // Default logged in user is marketingvivibox@gmail.com
+    return PRESET_TEAM_MEMBERS[0];
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authReason, setAuthReason] = useState<string | undefined>();
+
+  const requireAuth = (actionName: string): boolean => {
+    if (!teamUser) {
+      setAuthReason(`Para ${actionName}, por favor identifícate con tu correo de equipo.`);
+      setIsAuthModalOpen(true);
+      return false;
+    }
+    return true;
+  };
+
+  const handleSelectUser = (user: TeamMember) => {
+    setTeamUser(user);
+    try {
+      localStorage.setItem(TEAM_USER_STORAGE_KEY, JSON.stringify(user));
+    } catch {}
+    showSyncToast(`Sesión activa: ${user.name} (${user.email}).`, 'success');
+  };
+
+  const handleLogoutUser = () => {
+    setTeamUser(null);
+    try {
+      localStorage.removeItem(TEAM_USER_STORAGE_KEY);
+    } catch {}
+    showSyncToast('Sesión de equipo cerrada.', 'info');
   };
 
   // Initial load from persistent server storage + real-time interval polling
@@ -179,7 +222,24 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [sortOption, setSortOption] = useState<SortOption>('manual');
-  const [viewMode, setViewMode] = useState<ViewMode>('3d');
+  // VIEW MODE: Default is 'table' with user session persistence
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    try {
+      const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+      if (saved && ['table', '3d', 'spheres', 'proportional', 'standard'].includes(saved)) {
+        return saved as ViewMode;
+      }
+    } catch {}
+    return 'table'; // Default is Table view!
+  });
+
+  // Persist selected view mode across reloads and sessions
+  useEffect(() => {
+    try {
+      localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
+    } catch {}
+  }, [viewMode]);
+
   const [selectedFocus, setSelectedFocus] = useState<FunctionalFocus | 'all'>('all');
   const [selectedResponsible, setSelectedResponsible] = useState('all');
 
@@ -191,7 +251,7 @@ export default function App() {
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [taskToEdit, setTaskToEdit] = useState<CRMTask | null>(null);
 
-  // Connected Spreadsheet for Real-Time Synchronization
+  // Connected Spreadsheet for Real-Time Synchronization (Shared across all team members)
   const [connectedSheet, setConnectedSheet] = useState<ConnectedSpreadsheet | null>(() => {
     return getStoredConnectedSheet();
   });
@@ -202,22 +262,59 @@ export default function App() {
     setSyncToast({ message, type });
     setTimeout(() => {
       setSyncToast((cur) => (cur?.message === message ? null : cur));
-    }, 4000);
+    }, 4500);
   };
+
+  // Fetch central sheet config from server on mount
+  useEffect(() => {
+    const fetchServerSheetConfig = async () => {
+      try {
+        const res = await fetch('/api/sheet-config');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.config && data.config.spreadsheetId) {
+            const updated: ConnectedSpreadsheet = {
+              spreadsheetId: data.config.spreadsheetId,
+              spreadsheetTitle: data.config.spreadsheetTitle || 'Matriz de Criticidad CRM WhatsApp',
+              spreadsheetUrl: data.config.spreadsheetUrl || `https://docs.google.com/spreadsheets/d/${data.config.spreadsheetId}/edit`,
+              sheetTabName: data.config.sheetTabName || 'Hoja Principal',
+              lastSyncedAt: data.config.lastSyncedAt || new Date().toISOString(),
+              autoSync: data.config.autoSync ?? true,
+            };
+            setConnectedSheet(updated);
+            setStoredConnectedSheet(updated);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch server sheet-config:', err);
+      }
+    };
+    fetchServerSheetConfig();
+  }, []);
 
   const handleConnectedSheetChange = (sheet: ConnectedSpreadsheet | null) => {
     setConnectedSheet(sheet);
     setStoredConnectedSheet(sheet);
     if (sheet) {
-      showSyncToast(`Hoja "${sheet.spreadsheetTitle}" vinculada para sincronización continua.`, 'success');
+      fetch('/api/sheet-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: sheet }),
+      }).catch(() => {});
+      showSyncToast(`Hoja "${sheet.spreadsheetTitle}" vinculada para el equipo.`, 'success');
     } else {
+      fetch('/api/sheet-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: { spreadsheetId: '', spreadsheetUrl: '' } }),
+      }).catch(() => {});
       showSyncToast('Hoja de cálculo desvinculada de la sincronización.', 'info');
     }
   };
 
   // Push latest CRM state to connected spreadsheet
   const triggerSyncToGoogleSheets = async (targetTasks = tasks, targetStates = taskStates): Promise<void> => {
-    if (!connectedSheet) return;
+    if (!connectedSheet || !connectedSheet.spreadsheetId) return;
     setIsSyncing(true);
     try {
       const result = await pushTasksToSpreadsheet(
@@ -232,7 +329,7 @@ export default function App() {
       };
       setConnectedSheet(updated);
       setStoredConnectedSheet(updated);
-      showSyncToast(`Sincronizado con Google Sheets (${targetTasks.length} pendientes actualizados).`, 'success');
+      showSyncToast(`Sincronizado hacia Google Sheets (${targetTasks.length} pendientes).`, 'success');
     } catch (err: any) {
       console.error('Error auto-syncing to Google Sheets:', err);
       showSyncToast(err?.message || 'No se pudo sincronizar automáticamente con Google Sheets.', 'error');
@@ -241,8 +338,73 @@ export default function App() {
     }
   };
 
+  // Bidirectional Pull: Fetch modifications from Google Sheets and update web app
+  const handlePullFromGoogleSheets = async () => {
+    if (!connectedSheet || !connectedSheet.spreadsheetId) {
+      setIsSheetsOpen(true);
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      // 1. Try public read proxy (works without OAuth)
+      const res = await fetch('/api/sheets/public-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          spreadsheetId: connectedSheet.spreadsheetId,
+          sheetTab: connectedSheet.sheetTabName || 'Hoja Principal',
+        }),
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.values) && data.values.length > 1) {
+        const parsedResult = parseSpreadsheetRowsToTasks(data.values, tasks);
+        if (parsedResult.tasks.length > 0) {
+          const mergedStates = { ...taskStates, ...parsedResult.newStates };
+          setTasks(parsedResult.tasks);
+          setTaskStates(mergedStates);
+          await saveTasksToServer(parsedResult.tasks, mergedStates);
+          showSyncToast(`Sincronización Bidireccional: ${parsedResult.tasks.length} pendientes traídos desde Google Sheets.`, 'success');
+          return;
+        }
+      }
+
+      // 2. Fallback to authenticated read via Google Sheets API
+      const authRows = await readSpreadsheetValues(
+        connectedSheet.spreadsheetId,
+        `${connectedSheet.sheetTabName || 'Hoja Principal'}!A1:N50`
+      );
+      if (authRows && authRows.length > 1) {
+        const parsedResult = parseSpreadsheetRowsToTasks(authRows, tasks);
+        if (parsedResult.tasks.length > 0) {
+          const mergedStates = { ...taskStates, ...parsedResult.newStates };
+          setTasks(parsedResult.tasks);
+          setTaskStates(mergedStates);
+          await saveTasksToServer(parsedResult.tasks, mergedStates);
+          showSyncToast(`Sincronización Bidireccional: ${parsedResult.tasks.length} pendientes actualizados desde Google Sheets.`, 'success');
+          return;
+        }
+      }
+      throw new Error('No se pudieron leer las filas de la hoja de cálculo. Verifica que el enlace tenga permisos de lectura.');
+    } catch (err: any) {
+      console.error('Error pulling from Google Sheets:', err);
+      showSyncToast(err?.message || 'Error al traer pendientes de Google Sheets.', 'error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Periodic bidirectional pull if autoSync is active (every 30s)
+  useEffect(() => {
+    if (!connectedSheet?.spreadsheetId || !connectedSheet?.autoSync) return;
+    const interval = setInterval(() => {
+      handlePullFromGoogleSheets().catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [connectedSheet?.spreadsheetId, connectedSheet?.autoSync]);
+
   // Toggle single task
   const handleToggleTask = (id: number) => {
+    if (!requireAuth('modificar el estado de un pendiente')) return;
     const nextActive = taskStates[id] === false ? true : false;
     const nextStates = {
       ...taskStates,
@@ -257,6 +419,7 @@ export default function App() {
 
   // Toggle all tasks on / off
   const handleToggleAll = (activate: boolean) => {
+    if (!requireAuth('modificar todos los pendientes')) return;
     const updated: Record<number, boolean> = {};
     tasks.forEach((task) => {
       updated[task.id] = activate;
@@ -270,16 +433,19 @@ export default function App() {
 
   // Task Creation & Editing handlers
   const handleAddNewTask = () => {
+    if (!requireAuth('crear un nuevo pendiente')) return;
     setTaskToEdit(null);
     setIsEditModalOpen(true);
   };
 
   const handleEditTask = (task: CRMTask) => {
+    if (!requireAuth('editar un pendiente')) return;
     setTaskToEdit(task);
     setIsEditModalOpen(true);
   };
 
   const handleSaveTask = (savedTask: CRMTask) => {
+    if (!requireAuth('guardar modificaciones')) return;
     let nextTasks: CRMTask[] = [];
     setTasks((prev) => {
       const idx = prev.findIndex((t) => t.id === savedTask.id);
@@ -314,6 +480,7 @@ export default function App() {
   };
 
   const handleDeleteTask = (id: number) => {
+    if (!requireAuth('eliminar un pendiente')) return;
     const nextTasks = tasks.filter((t) => t.id !== id);
     setTasks(nextTasks);
     const nextStates = { ...taskStates };
@@ -329,6 +496,7 @@ export default function App() {
   };
 
   const handleMoveTask = (id: number, direction: 'up' | 'down') => {
+    if (!requireAuth('reordenar pendientes')) return;
     let nextTasks: CRMTask[] = [];
     setTasks((prev) => {
       const idx = prev.findIndex((t) => t.id === id);
@@ -351,6 +519,7 @@ export default function App() {
   };
 
   const handleReorderTasks = (sourceId: number, targetId: number, position: 'before' | 'after' = 'before') => {
+    if (!requireAuth('reordenar pendientes')) return;
     let nextTasks: CRMTask[] = [];
     setTasks((prev) => {
       const sourceIdx = prev.findIndex((t) => t.id === sourceId);
@@ -560,7 +729,10 @@ export default function App() {
           onToggleAllExpanded={handleToggleAllExpanded}
           connectedSheet={connectedSheet}
           onTriggerSync={() => triggerSyncToGoogleSheets(tasks, taskStates)}
+          onPullSync={handlePullFromGoogleSheets}
           isSyncing={isSyncing}
+          teamUser={teamUser}
+          onOpenAuth={() => setIsAuthModalOpen(true)}
         />
 
         {/* Executive Metrics & Telemetry HUD */}
@@ -807,6 +979,16 @@ export default function App() {
         }}
         onTriggerSync={() => triggerSyncToGoogleSheets(tasks, taskStates)}
         isSyncing={isSyncing}
+      />
+
+      {/* Team Authentication & Email Identification Modal */}
+      <TeamAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        currentUser={teamUser}
+        onSelectUser={handleSelectUser}
+        onLogout={handleLogoutUser}
+        actionReason={authReason}
       />
 
       {/* Real-Time Google Sheets Synchronization Toast */}

@@ -13,6 +13,7 @@ async function startServer() {
   const DATA_DIR = path.join(process.cwd(), 'data');
   const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
   const DEFAULT_TASKS_FILE = path.join(DATA_DIR, 'defaultTasks.json');
+  const SHEET_CONFIG_FILE = path.join(DATA_DIR, 'sheetConfig.json');
 
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -23,7 +24,10 @@ async function startServer() {
     try {
       if (fs.existsSync(TASKS_FILE)) {
         const raw = fs.readFileSync(TASKS_FILE, 'utf8');
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.tasks) && parsed.tasks.length > 0) {
+          return parsed;
+        }
       }
       if (fs.existsSync(DEFAULT_TASKS_FILE)) {
         const raw = fs.readFileSync(DEFAULT_TASKS_FILE, 'utf8');
@@ -46,18 +50,54 @@ async function startServer() {
     return { tasks: [], taskStates: {}, updatedAt: new Date().toISOString() };
   }
 
-  function saveStoredTasks(tasks: any[], taskStates?: Record<number, boolean>) {
+  function saveStoredTasks(tasks: any[], taskStates?: Record<number, boolean>, modifiedBy?: string) {
     try {
       const current = getStoredTasks();
       const updated = {
         tasks,
         taskStates: taskStates || current.taskStates || {},
         updatedAt: new Date().toISOString(),
+        lastModifiedBy: modifiedBy || 'marketingvivibox@gmail.com',
       };
       fs.writeFileSync(TASKS_FILE, JSON.stringify(updated, null, 2), 'utf8');
       return updated;
     } catch (e) {
       console.error('Error saving tasks to disk:', e);
+      throw e;
+    }
+  }
+
+  function getStoredSheetConfig() {
+    try {
+      if (fs.existsSync(SHEET_CONFIG_FILE)) {
+        const raw = fs.readFileSync(SHEET_CONFIG_FILE, 'utf8');
+        return JSON.parse(raw);
+      }
+    } catch (e) {
+      console.error('Error reading sheetConfig.json:', e);
+    }
+    return {
+      spreadsheetId: '',
+      sheetTabName: 'Hoja Principal',
+      spreadsheetTitle: 'Matriz de Criticidad CRM WhatsApp Flowdex',
+      spreadsheetUrl: '',
+      autoSync: true,
+      lastSyncedAt: null,
+    };
+  }
+
+  function saveStoredSheetConfig(config: any) {
+    try {
+      const current = getStoredSheetConfig();
+      const updated = {
+        ...current,
+        ...config,
+        updatedAt: new Date().toISOString(),
+      };
+      fs.writeFileSync(SHEET_CONFIG_FILE, JSON.stringify(updated, null, 2), 'utf8');
+      return updated;
+    } catch (e) {
+      console.error('Error saving sheetConfig to disk:', e);
       throw e;
     }
   }
@@ -84,16 +124,39 @@ async function startServer() {
 
   app.post('/api/tasks', (req, res) => {
     try {
-      const { tasks, taskStates } = req.body;
+      const { tasks, taskStates, modifiedBy } = req.body;
       if (!Array.isArray(tasks)) {
         return res.status(400).json({ success: false, error: 'tasks must be an array' });
       }
-      const updated = saveStoredTasks(tasks, taskStates);
+      const updated = saveStoredTasks(tasks, taskStates, modifiedBy);
       res.json({
         success: true,
         count: updated.tasks.length,
         updatedAt: updated.updatedAt,
       });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  // Central Google Sheet configuration (Shared across all team members)
+  app.get('/api/sheet-config', (req, res) => {
+    try {
+      const config = getStoredSheetConfig();
+      res.json({ success: true, config });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  app.post('/api/sheet-config', (req, res) => {
+    try {
+      const { config } = req.body;
+      if (!config || typeof config !== 'object') {
+        return res.status(400).json({ success: false, error: 'Invalid config payload' });
+      }
+      const updated = saveStoredSheetConfig(config);
+      res.json({ success: true, config: updated });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err?.message });
     }
