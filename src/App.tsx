@@ -80,14 +80,7 @@ export default function App() {
     return CRM_TASKS_DATA;
   });
 
-  // Save tasks to localStorage when modified
-  useEffect(() => {
-    try {
-      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
-    } catch {
-      // ignore
-    }
-  }, [tasks]);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Initialize toggle states: tickets #16, #17, #18 are 'Cerrado' by default, 1-15 are active
   const [taskStates, setTaskStates] = useState<Record<number, boolean>>(() => {
@@ -105,6 +98,73 @@ export default function App() {
     });
     return initial;
   });
+
+  // Persistent Server Synchronization (works across multiple accounts, devices and browsers)
+  const saveTasksToServer = async (targetTasks: CRMTask[], targetStates: Record<number, boolean>) => {
+    setIsSaving(true);
+    try {
+      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(targetTasks));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(targetStates));
+      await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tasks: targetTasks,
+          taskStates: targetStates,
+        }),
+      });
+    } catch (err) {
+      console.warn('Backend tasks persistence warning:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Initial load from persistent server storage + real-time interval polling
+  useEffect(() => {
+    let isMounted = true;
+    const fetchServerTasks = async () => {
+      try {
+        const res = await fetch('/api/tasks');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.tasks) && data.tasks.length > 0 && isMounted) {
+            setTasks(data.tasks);
+            if (data.taskStates && Object.keys(data.taskStates).length > 0) {
+              setTaskStates(data.taskStates);
+            }
+            try {
+              localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(data.tasks));
+              if (data.taskStates) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data.taskStates));
+              }
+            } catch {}
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch server tasks on load:', err);
+      }
+    };
+
+    fetchServerTasks();
+    const interval = setInterval(fetchServerTasks, 10000);
+    window.addEventListener('focus', fetchServerTasks);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      window.removeEventListener('focus', fetchServerTasks);
+    };
+  }, []);
+
+  // Save tasks to localStorage when modified
+  useEffect(() => {
+    try {
+      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+    } catch {
+      // ignore
+    }
+  }, [tasks]);
 
   // Save to localStorage
   useEffect(() => {
@@ -189,6 +249,7 @@ export default function App() {
       [id]: nextActive,
     };
     setTaskStates(nextStates);
+    saveTasksToServer(tasks, nextStates);
     if (connectedSheet && connectedSheet.autoSync) {
       triggerSyncToGoogleSheets(tasks, nextStates);
     }
@@ -201,6 +262,7 @@ export default function App() {
       updated[task.id] = activate;
     });
     setTaskStates(updated);
+    saveTasksToServer(tasks, updated);
     if (connectedSheet && connectedSheet.autoSync) {
       triggerSyncToGoogleSheets(tasks, updated);
     }
@@ -242,6 +304,9 @@ export default function App() {
       setSelectedDetailTask(savedTask);
     }
 
+    // Persist to server & localStorage
+    saveTasksToServer(nextTasks, nextStates);
+
     // Auto-sync with connected Google Sheets if active
     if (connectedSheet && connectedSheet.autoSync) {
       triggerSyncToGoogleSheets(nextTasks, nextStates);
@@ -257,6 +322,7 @@ export default function App() {
     if (selectedDetailTask && selectedDetailTask.id === id) {
       setSelectedDetailTask(null);
     }
+    saveTasksToServer(nextTasks, nextStates);
     if (connectedSheet && connectedSheet.autoSync) {
       triggerSyncToGoogleSheets(nextTasks, nextStates);
     }
@@ -278,12 +344,35 @@ export default function App() {
     });
     // Switch to manual sort so the adjusted meeting order is visible immediately
     setSortOption('manual');
+    saveTasksToServer(nextTasks, taskStates);
     if (connectedSheet && connectedSheet.autoSync && nextTasks.length > 0) {
       triggerSyncToGoogleSheets(nextTasks, taskStates);
     }
   };
 
-  const handleResetTasks = () => {
+  const handleReorderTasks = (sourceId: number, targetId: number, position: 'before' | 'after' = 'before') => {
+    let nextTasks: CRMTask[] = [];
+    setTasks((prev) => {
+      const sourceIdx = prev.findIndex((t) => t.id === sourceId);
+      const targetIdx = prev.findIndex((t) => t.id === targetId);
+      if (sourceIdx === -1 || targetIdx === -1 || sourceIdx === targetIdx) return prev;
+
+      const copy = [...prev];
+      const [moved] = copy.splice(sourceIdx, 1);
+      const newTargetIdx = copy.findIndex((t) => t.id === targetId);
+      const insertAt = position === 'before' ? newTargetIdx : newTargetIdx + 1;
+      copy.splice(insertAt, 0, moved);
+      nextTasks = copy;
+      return copy;
+    });
+    setSortOption('manual');
+    saveTasksToServer(nextTasks, taskStates);
+    if (connectedSheet && connectedSheet.autoSync && nextTasks.length > 0) {
+      triggerSyncToGoogleSheets(nextTasks, taskStates);
+    }
+  };
+
+  const handleResetTasks = async () => {
     if (confirm('¿Deseas restablecer todos los pendientes, parámetros y observaciones a los valores originales de la reunión del 10/09/2026?')) {
       setTasks(CRM_TASKS_DATA);
       const initial: Record<number, boolean> = {};
@@ -292,6 +381,9 @@ export default function App() {
       });
       setTaskStates(initial);
       localStorage.removeItem(TASKS_STORAGE_KEY);
+      try {
+        await fetch('/api/tasks/reset', { method: 'POST' });
+      } catch {}
       if (connectedSheet && connectedSheet.autoSync) {
         triggerSyncToGoogleSheets(CRM_TASKS_DATA, initial);
       }
@@ -583,13 +675,16 @@ export default function App() {
             onToggleAll={handleToggleAll}
           />
         ) : viewMode === 'table' ? (
-          /* Table View with in-line editing and reordering */
+          /* Table View with in-line editing, drag-and-drop reordering, and instant persistence */
           <MatrixTableView
             tasks={filteredTasks}
             taskStates={taskStates}
             onToggle={handleToggleTask}
             onEdit={handleEditTask}
             onMove={handleMoveTask}
+            onReorder={handleReorderTasks}
+            onAddNewTask={handleAddNewTask}
+            isSaving={isSaving}
           />
         ) : (
           /* Cards Grid (Proportional or Standard) with Progressive Disclosure Menus */

@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 
 async function startServer() {
@@ -9,9 +10,116 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+  const DATA_DIR = path.join(process.cwd(), 'data');
+  const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
+  const DEFAULT_TASKS_FILE = path.join(DATA_DIR, 'defaultTasks.json');
+
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+
+  // Helper to read tasks
+  function getStoredTasks() {
+    try {
+      if (fs.existsSync(TASKS_FILE)) {
+        const raw = fs.readFileSync(TASKS_FILE, 'utf8');
+        return JSON.parse(raw);
+      }
+      if (fs.existsSync(DEFAULT_TASKS_FILE)) {
+        const raw = fs.readFileSync(DEFAULT_TASKS_FILE, 'utf8');
+        const defaultTasks = JSON.parse(raw);
+        const states: Record<number, boolean> = {};
+        defaultTasks.forEach((t: any) => {
+          states[t.id] = t.estado !== 'Cerrado';
+        });
+        const initial = {
+          tasks: defaultTasks,
+          taskStates: states,
+          updatedAt: new Date().toISOString(),
+        };
+        fs.writeFileSync(TASKS_FILE, JSON.stringify(initial, null, 2), 'utf8');
+        return initial;
+      }
+    } catch (e) {
+      console.error('Error reading stored tasks:', e);
+    }
+    return { tasks: [], taskStates: {}, updatedAt: new Date().toISOString() };
+  }
+
+  function saveStoredTasks(tasks: any[], taskStates?: Record<number, boolean>) {
+    try {
+      const current = getStoredTasks();
+      const updated = {
+        tasks,
+        taskStates: taskStates || current.taskStates || {},
+        updatedAt: new Date().toISOString(),
+      };
+      fs.writeFileSync(TASKS_FILE, JSON.stringify(updated, null, 2), 'utf8');
+      return updated;
+    } catch (e) {
+      console.error('Error saving tasks to disk:', e);
+      throw e;
+    }
+  }
+
   // Health check endpoint
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Persistent Tasks endpoints (accessible across all accounts and devices)
+  app.get('/api/tasks', (req, res) => {
+    try {
+      const data = getStoredTasks();
+      res.json({
+        success: true,
+        tasks: data.tasks || [],
+        taskStates: data.taskStates || {},
+        updatedAt: data.updatedAt,
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  app.post('/api/tasks', (req, res) => {
+    try {
+      const { tasks, taskStates } = req.body;
+      if (!Array.isArray(tasks)) {
+        return res.status(400).json({ success: false, error: 'tasks must be an array' });
+      }
+      const updated = saveStoredTasks(tasks, taskStates);
+      res.json({
+        success: true,
+        count: updated.tasks.length,
+        updatedAt: updated.updatedAt,
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  app.post('/api/tasks/reset', (req, res) => {
+    try {
+      if (fs.existsSync(DEFAULT_TASKS_FILE)) {
+        const raw = fs.readFileSync(DEFAULT_TASKS_FILE, 'utf8');
+        const defaultTasks = JSON.parse(raw);
+        const states: Record<number, boolean> = {};
+        defaultTasks.forEach((t: any) => {
+          states[t.id] = t.estado !== 'Cerrado';
+        });
+        const initial = {
+          tasks: defaultTasks,
+          taskStates: states,
+          updatedAt: new Date().toISOString(),
+        };
+        fs.writeFileSync(TASKS_FILE, JSON.stringify(initial, null, 2), 'utf8');
+        return res.json({ success: true, tasks: defaultTasks, taskStates: states });
+      }
+      return res.status(404).json({ success: false, error: 'default tasks not found' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
   });
 
   /**

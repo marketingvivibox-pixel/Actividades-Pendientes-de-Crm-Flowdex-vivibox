@@ -24,7 +24,12 @@ import {
   ArrowRight,
   Edit3,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  GripVertical,
+  Plus,
+  Check,
+  CheckCircle2,
+  RefreshCw
 } from 'lucide-react';
 import { CRMTask } from '../types';
 import { FOCUS_DEFINITIONS, SEMANTIC_STYLES } from '../data/crmTasksData';
@@ -35,6 +40,9 @@ interface MatrixTableViewProps {
   onToggle: (id: number) => void;
   onEdit?: (task: CRMTask) => void;
   onMove?: (id: number, direction: 'up' | 'down') => void;
+  onReorder?: (sourceId: number, targetId: number, position: 'before' | 'after') => void;
+  onAddNewTask?: () => void;
+  isSaving?: boolean;
 }
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -61,8 +69,14 @@ export const MatrixTableView: React.FC<MatrixTableViewProps> = ({
   onToggle,
   onEdit,
   onMove,
+  onReorder,
+  onAddNewTask,
+  isSaving = false,
 }) => {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
+  const [dragOverTaskId, setDragOverTaskId] = useState<number | null>(null);
+  const [dragOverPosition, setDragOverPosition] = useState<'before' | 'after' | null>(null);
 
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => ({
@@ -71,245 +85,394 @@ export const MatrixTableView: React.FC<MatrixTableViewProps> = ({
     }));
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedTaskId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(id));
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    if (draggedTaskId === id) return;
+
+    const rowRect = e.currentTarget.getBoundingClientRect();
+    const offsetY = e.clientY - rowRect.top;
+    const isTopHalf = offsetY < rowRect.height / 2;
+    const position = isTopHalf ? 'before' : 'after';
+
+    setDragOverTaskId(id);
+    setDragOverPosition(position);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverTaskId(null);
+    setDragOverPosition(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    if (draggedTaskId && draggedTaskId !== targetId && onReorder) {
+      onReorder(draggedTaskId, targetId, dragOverPosition || 'before');
+    }
+    setDraggedTaskId(null);
+    setDragOverTaskId(null);
+    setDragOverPosition(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedTaskId(null);
+    setDragOverTaskId(null);
+    setDragOverPosition(null);
+  };
+
   return (
-    <div className="w-full overflow-hidden rounded-2xl border border-[#e5dfd3] bg-white shadow-[0_6px_24px_-4px_rgba(87,70,55,0.06)] transition-all">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr className="border-b border-[#e4dccf] bg-[#faf6ee] text-[#6d6152] font-semibold text-[11px] uppercase tracking-wider">
-              <th className="py-3.5 px-3 w-16 text-center">Selector</th>
-              <th className="py-3.5 px-3 w-14 text-center">#</th>
-              <th className="py-3.5 px-3 w-32">Impacto CRM</th>
-              <th className="py-3.5 px-3 w-40">Enfoque Funcional</th>
-              <th className="py-3.5 px-4 min-w-[280px]">Pendiente Crítico</th>
-              <th className="py-3.5 px-3 w-28">Responsable</th>
-              <th className="py-3.5 px-3 w-20 text-center">Prioridad</th>
-              <th className="py-3.5 px-3 w-24 text-center">Detalles</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#f2ede4]">
-            {tasks.map((task) => {
-              const isActive = taskStates[task.id] !== false;
-              const focus = FOCUS_DEFINITIONS[task.functionalFocus] || FOCUS_DEFINITIONS.protocolo_resuelto;
-              const semantic = SEMANTIC_STYLES[task.semanticDomain] || SEMANTIC_STYLES.clarified_closed;
-              const IconComp = ICON_MAP[semantic.iconName] || AlertTriangle;
-              const isExpanded = !!expandedRows[task.id];
+    <div className="w-full flex flex-col gap-3">
+      {/* Table Toolbar: Action to Add Task, Drag Guidance, and Persistence Status */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-[#faf6ee] border border-[#e5dfd3] shadow-2xs">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-[#292524] text-amber-300">
+            <SlidersHorizontal className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm text-[#292524] font-serif-warm">
+                Gestión de Tabla y Criticidad
+              </span>
+              <span className="text-[11px] px-2 py-0.5 rounded-full font-mono font-bold bg-[#ede6da] text-[#5c5042]">
+                {tasks.length} {tasks.length === 1 ? 'pendiente' : 'pendientes'}
+              </span>
+            </div>
+            <p className="text-xs text-[#786d5f] flex items-center gap-1.5 mt-0.5">
+              <GripVertical className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+              <span>Puedes <strong>arrastrar las filas</strong> para cambiar el orden de criticidad acordado.</span>
+            </p>
+          </div>
+        </div>
 
-              return (
-                <React.Fragment key={task.id}>
-                  <tr
-                    id={`table-row-task-${task.id}`}
-                    className={`transition-all duration-200 ${
-                      isActive
-                        ? 'bg-white hover:bg-[#faf7f2] text-[#292524]'
-                        : 'bg-[#f5efe6]/70 text-[#8c8273] opacity-50 filter grayscale-[70%]'
-                    }`}
-                    style={{
-                      borderLeft: `5px solid ${isActive ? focus.accentHex : '#a8a29e'}`,
-                    }}
-                  >
-                    {/* Selector Switch */}
-                    <td className="py-3 px-3 text-center align-middle">
-                      <button
-                        type="button"
-                        onClick={() => onToggle(task.id)}
-                        className={`p-1.5 rounded-lg border transition-all cursor-pointer shadow-2xs ${
-                          isActive
-                            ? 'bg-[#292524] text-amber-300 border-[#292524]'
-                            : 'bg-[#ede5d8] text-stone-400 border-[#d7cbba]'
-                        }`}
-                        title={isActive ? 'Apagar para opacar' : 'Encender'}
+        <div className="flex items-center gap-2.5">
+          {/* Persistence status indicator */}
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+              isSaving
+                ? 'bg-amber-50 text-amber-800 border-amber-200 animate-pulse'
+                : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+            }`}
+          >
+            {isSaving ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                <span>Guardando cambios...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Cambios persistentes</span>
+              </>
+            )}
+          </div>
+
+          {/* Add New Task Button */}
+          {onAddNewTask && (
+            <button
+              type="button"
+              onClick={onAddNewTask}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#292524] text-[#f6f3ed] hover:bg-[#44403c] transition-all cursor-pointer shadow-sm hover:shadow active:scale-95"
+            >
+              <Plus className="w-4 h-4 text-amber-300" />
+              <span>Agregar Pendiente</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main Table */}
+      <div className="w-full overflow-hidden rounded-2xl border border-[#e5dfd3] bg-white shadow-[0_6px_24px_-4px_rgba(87,70,55,0.06)] transition-all">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-[#e4dccf] bg-[#faf6ee] text-[#6d6152] font-semibold text-[11px] uppercase tracking-wider">
+                <th className="py-3.5 px-3 w-12 text-center" title="Arrastrar para ordenar">
+                  <GripVertical className="w-3.5 h-3.5 mx-auto text-[#8c7e6f]" />
+                </th>
+                <th className="py-3.5 px-3 w-16 text-center">Selector</th>
+                <th className="py-3.5 px-3 w-16 text-center"># Ticket</th>
+                <th className="py-3.5 px-3 w-32">Impacto CRM</th>
+                <th className="py-3.5 px-3 w-40">Enfoque Funcional</th>
+                <th className="py-3.5 px-4 min-w-[280px]">Pendiente Crítico</th>
+                <th className="py-3.5 px-3 w-28">Responsable</th>
+                <th className="py-3.5 px-3 w-20 text-center">Prioridad</th>
+                <th className="py-3.5 px-3 w-24 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#f2ede4]">
+              {tasks.map((task) => {
+                const isActive = taskStates[task.id] !== false;
+                const focus = FOCUS_DEFINITIONS[task.functionalFocus] || FOCUS_DEFINITIONS.protocolo_resuelto;
+                const semantic = SEMANTIC_STYLES[task.semanticDomain] || SEMANTIC_STYLES.clarified_closed;
+                const IconComp = ICON_MAP[semantic.iconName] || AlertTriangle;
+                const isExpanded = !!expandedRows[task.id];
+                const isBeingDragged = draggedTaskId === task.id;
+                const isDragTarget = dragOverTaskId === task.id;
+
+                let dragTargetStyle = '';
+                if (isDragTarget && dragOverPosition === 'before') {
+                  dragTargetStyle = 'border-t-2 border-t-amber-600 bg-amber-50/60';
+                } else if (isDragTarget && dragOverPosition === 'after') {
+                  dragTargetStyle = 'border-b-2 border-b-amber-600 bg-amber-50/60';
+                }
+
+                return (
+                  <React.Fragment key={task.id}>
+                    <tr
+                      id={`table-row-task-${task.id}`}
+                      draggable={true}
+                      onDragStart={(e) => handleDragStart(e, task.id)}
+                      onDragOver={(e) => handleDragOver(e, task.id)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, task.id)}
+                      onDragEnd={handleDragEnd}
+                      className={`transition-all duration-150 ${dragTargetStyle} ${
+                        isBeingDragged
+                          ? 'opacity-30 bg-amber-50/40 border-dashed border-amber-400'
+                          : isActive
+                          ? 'bg-white hover:bg-[#faf7f2] text-[#292524]'
+                          : 'bg-[#f5efe6]/70 text-[#8c8273] opacity-50 filter grayscale-[70%]'
+                      }`}
+                      style={{
+                        borderLeft: `5px solid ${isActive ? focus.accentHex : '#a8a29e'}`,
+                      }}
+                    >
+                      {/* Drag Handle */}
+                      <td 
+                        className="py-3 px-2 text-center align-middle cursor-grab active:cursor-grabbing text-[#9c8e7e] hover:text-[#292524] hover:bg-[#f0e9dc]/50 transition-colors"
+                        title="Arrastra para reordenar"
                       >
-                        <Power className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
+                        <GripVertical className="w-4 h-4 mx-auto" />
+                      </td>
 
-                    {/* # Ticket & Reorder */}
-                    <td className="py-3 px-3 text-center align-middle font-mono font-bold">
-                      <div className="inline-flex items-center gap-1">
-                        {onMove && (
-                          <div className="flex flex-col">
-                            <button
-                              type="button"
-                              onClick={() => onMove(task.id, 'up')}
-                              className="p-0.5 text-[#8c7860] hover:text-[#292524] hover:bg-[#ede5d8] rounded transition-colors"
-                              title="Subir posición"
-                            >
-                              <ArrowUp className="w-3 h-3" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onMove(task.id, 'down')}
-                              className="p-0.5 text-[#8c7860] hover:text-[#292524] hover:bg-[#ede5d8] rounded transition-colors"
-                              title="Bajar posición"
-                            >
-                              <ArrowDown className="w-3 h-3" />
-                            </button>
-                          </div>
-                        )}
-                        <span className="px-2 py-0.5 rounded-md text-xs bg-[#f4efe6] text-[#574c3e] border border-[#e5ded2]">
-                          #{task.originalNumber < 10 ? `0${task.originalNumber}` : task.originalNumber}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Impacto CRM & Score */}
-                    <td className="py-3 px-3 align-middle">
-                      <div className="flex items-center gap-2">
-                        <div className="w-12 h-1.5 rounded-full bg-[#ede6da] overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-amber-600 to-rose-600"
-                            style={{ width: `${Math.max(10, task.criticalityScore)}%` }}
-                          />
-                        </div>
-                        <span className="font-mono font-bold text-xs text-[#292524]">
-                          {task.criticalityScore}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-[#786d5f]">
-                        {task.proportionalUnits}x unidades
-                      </span>
-                    </td>
-
-                    {/* Enfoque Funcional */}
-                    <td className="py-3 px-3 align-middle">
-                      <span
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-semibold border"
-                        style={{
-                          backgroundColor: '#faf7f2',
-                          borderColor: `${focus.accentHex}40`,
-                          color: focus.accentHex,
-                        }}
-                      >
-                        <IconComp className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate max-w-[120px]">{focus.name}</span>
-                      </span>
-                    </td>
-
-                    {/* Pendiente Crítico */}
-                    <td className="py-3 px-4 align-middle">
-                      <div 
-                        onClick={() => toggleRow(task.id)}
-                        className={`font-semibold text-xs leading-snug cursor-pointer hover:text-amber-800 ${
-                          isActive ? 'text-[#1c1917]' : 'line-through text-[#8c8273]'
-                        }`}
-                      >
-                        {task.pendiente}
-                      </div>
-                    </td>
-
-                    {/* Responsable */}
-                    <td className="py-3 px-3 align-middle font-medium text-xs text-[#3d3429]">
-                      {task.responsable}
-                    </td>
-
-                    {/* Prioridad */}
-                    <td className="py-3 px-3 text-center align-middle font-mono font-bold text-xs">
-                      <span className={`px-2 py-0.5 rounded ${
-                        task.prioridad === 'Alta'
-                          ? 'bg-rose-100 text-rose-800'
-                          : task.prioridad === 'Media'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-stone-100 text-stone-700'
-                      }`}>
-                        {task.prioridad}
-                      </span>
-                    </td>
-
-                    {/* Acciones: Editar y Menú Desplegable */}
-                    <td className="py-3 px-3 text-center align-middle">
-                      <div className="inline-flex items-center gap-1.5">
-                        {onEdit && (
-                          <button
-                            type="button"
-                            onClick={() => onEdit(task)}
-                            className="p-1.5 rounded-lg text-[#8c7860] hover:text-[#292524] hover:bg-[#ede5d8] border border-[#e4dccf] transition-all cursor-pointer shadow-2xs"
-                            title="Editar parámetros, observaciones y prioridad"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-
+                      {/* Selector Switch */}
+                      <td className="py-3 px-3 text-center align-middle">
                         <button
                           type="button"
+                          onClick={() => onToggle(task.id)}
+                          className={`p-1.5 rounded-lg border transition-all cursor-pointer shadow-2xs ${
+                            isActive
+                              ? 'bg-[#292524] text-amber-300 border-[#292524]'
+                              : 'bg-[#ede5d8] text-stone-400 border-[#d7cbba]'
+                          }`}
+                          title={isActive ? 'Apagar para opacar' : 'Encender'}
+                        >
+                          <Power className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+
+                      {/* # Ticket & Up/Down fallback */}
+                      <td className="py-3 px-3 text-center align-middle font-mono font-bold">
+                        <div className="inline-flex items-center gap-1">
+                          {onMove && (
+                            <div className="flex flex-col">
+                              <button
+                                type="button"
+                                onClick={() => onMove(task.id, 'up')}
+                                className="p-0.5 text-[#8c7860] hover:text-[#292524] hover:bg-[#ede5d8] rounded transition-colors"
+                                title="Subir posición"
+                              >
+                                <ArrowUp className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onMove(task.id, 'down')}
+                                className="p-0.5 text-[#8c7860] hover:text-[#292524] hover:bg-[#ede5d8] rounded transition-colors"
+                                title="Bajar posición"
+                              >
+                                <ArrowDown className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                          <span className="px-2 py-0.5 rounded-md text-xs bg-[#f4efe6] text-[#574c3e] border border-[#e5ded2]">
+                            #{task.originalNumber < 10 ? `0${task.originalNumber}` : task.originalNumber}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Impacto CRM & Score */}
+                      <td className="py-3 px-3 align-middle">
+                        <div className="flex items-center gap-2">
+                          <div className="w-12 h-1.5 rounded-full bg-[#ede6da] overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-amber-600 to-rose-600"
+                              style={{ width: `${Math.max(10, task.criticalityScore)}%` }}
+                            />
+                          </div>
+                          <span className="font-mono font-bold text-xs text-[#292524]">
+                            {task.criticalityScore}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-[#786d5f]">
+                          {task.proportionalUnits}x unidades
+                        </span>
+                      </td>
+
+                      {/* Enfoque Funcional */}
+                      <td className="py-3 px-3 align-middle">
+                        <span
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-semibold border"
+                          style={{
+                            backgroundColor: '#faf7f2',
+                            borderColor: `${focus.accentHex}40`,
+                            color: focus.accentHex,
+                          }}
+                        >
+                          <IconComp className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate max-w-[120px]">{focus.name}</span>
+                        </span>
+                      </td>
+
+                      {/* Pendiente Crítico */}
+                      <td className="py-3 px-4 align-middle">
+                        <div 
                           onClick={() => toggleRow(task.id)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                            isExpanded
-                              ? 'bg-[#292524] text-white border-[#292524]'
-                              : 'bg-[#faf7f2] text-[#6d6152] border-[#e4dccf] hover:bg-[#f0e9dc]'
+                          className={`font-semibold text-xs leading-snug cursor-pointer hover:text-amber-800 ${
+                            isActive ? 'text-[#1c1917]' : 'line-through text-[#8c8273]'
                           }`}
                         >
-                          <span>{isExpanded ? 'Cerrar' : 'Detalle'}</span>
-                          <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                          {task.pendiente}
+                        </div>
+                      </td>
 
-                  {/* Fila Desplegada con Jerarquía Limpia y Profunda */}
-                  {isExpanded && (
-                    <tr className="bg-[#fcfaf7]">
-                      <td colSpan={8} className="p-4 border-l-4 border-l-[#a87943]">
-                        <div className="space-y-2.5">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                            {/* Bloque 1 */}
-                            <div className="p-3 rounded-xl bg-white border border-[#e8ded0]">
-                              <div className="flex items-center gap-1.5 font-bold text-[#b45309] mb-1 text-[11px] uppercase tracking-wider font-mono">
-                                <FileSearch className="w-3.5 h-3.5" />
-                                <span>1. Evidencia en Reunión (10/09/2026):</span>
-                              </div>
-                              <p className="text-[#4a3f33] italic leading-relaxed text-xs">
-                                "{task.detalleEvidencia}"
-                              </p>
-                            </div>
+                      {/* Responsable */}
+                      <td className="py-3 px-3 align-middle font-medium text-xs text-[#3d3429]">
+                        {task.responsable}
+                      </td>
 
-                            {/* Bloque 2 */}
-                            <div className="p-3 rounded-xl bg-[#fff7f5] border border-[#f5ded7] border-l-2 border-l-rose-500">
-                              <div className="flex items-center gap-1.5 font-bold text-[#b91c1c] mb-1 text-[11px] uppercase tracking-wider font-mono">
-                                <BadgeAlert className="w-3.5 h-3.5" />
-                                <span>2. Impacto Crítico en CRM:</span>
-                              </div>
-                              <p className="text-[#45271f] leading-relaxed text-xs">
-                                {task.impactoIndispensableCRM}
-                              </p>
-                            </div>
+                      {/* Prioridad */}
+                      <td className="py-3 px-3 text-center align-middle font-mono font-bold text-xs">
+                        <span className={`px-2 py-0.5 rounded ${
+                          task.prioridad === 'Alta'
+                            ? 'bg-rose-100 text-rose-800'
+                            : task.prioridad === 'Media'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-stone-100 text-stone-700'
+                        }`}>
+                          {task.prioridad}
+                        </span>
+                      </td>
 
-                            {/* Bloque 3 */}
-                            <div className="p-3 rounded-xl bg-[#f2f8f5] border border-[#d5e6df] border-l-2 border-l-teal-600">
-                              <div className="flex items-center gap-1.5 font-bold text-[#0f766e] mb-1 text-[11px] uppercase tracking-wider font-mono">
-                                <ArrowRight className="w-3.5 h-3.5" />
-                                <span>3. Acción y Protocolo Acordado:</span>
-                              </div>
-                              <p className="text-[#1a443c] font-semibold leading-relaxed text-xs">
-                                {task.accionAcordada}
-                              </p>
-                            </div>
-                          </div>
+                      {/* Acciones: Editar y Detalle */}
+                      <td className="py-3 px-3 text-center align-middle">
+                        <div className="inline-flex items-center gap-1.5">
+                          {onEdit && (
+                            <button
+                              type="button"
+                              onClick={() => onEdit(task)}
+                              className="p-1.5 rounded-lg text-[#8c7860] hover:text-[#292524] hover:bg-[#ede5d8] border border-[#e4dccf] transition-all cursor-pointer shadow-2xs"
+                              title="Editar parámetros, observaciones y prioridad"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
 
-                          {/* Metadatos adicionales */}
-                          <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-[#f7f3eb] text-[11px] text-[#574d3f]">
-                            <div>
-                              <span className="text-[#8c7f6f]">Categoría CRM:</span>{' '}
-                              <strong className="text-[#292524]">{task.categoria}</strong>
-                            </div>
-                            <div>
-                              <span className="text-[#8c7f6f]">Estado de Solución:</span>{' '}
-                              <strong className="text-[#292524]">{task.estado}</strong>
-                            </div>
-                            <div>
-                              <span className="text-[#8c7f6f]">Afectación Comercial:</span>{' '}
-                              <strong>{task.afectaVentasDirectas ? 'Impacta Ventas Directas' : 'Estabilidad Interna'}</strong>
-                            </div>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleRow(task.id)}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                              isExpanded
+                                ? 'bg-[#292524] text-white border-[#292524]'
+                                : 'bg-[#faf7f2] text-[#6d6152] border-[#e4dccf] hover:bg-[#f0e9dc]'
+                            }`}
+                          >
+                            <span>{isExpanded ? 'Cerrar' : 'Detalle'}</span>
+                            <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+
+                    {/* Fila Desplegada con Jerarquía Limpia y Profunda */}
+                    {isExpanded && (
+                      <tr className="bg-[#fcfaf7]">
+                        <td colSpan={9} className="p-4 border-l-4 border-l-[#a87943]">
+                          <div className="space-y-2.5">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                              {/* Bloque 1 */}
+                              <div className="p-3 rounded-xl bg-white border border-[#e8ded0]">
+                                <div className="flex items-center gap-1.5 font-bold text-[#b45309] mb-1 text-[11px] uppercase tracking-wider font-mono">
+                                  <FileSearch className="w-3.5 h-3.5" />
+                                  <span>1. Evidencia en Reunión (10/09/2026):</span>
+                                </div>
+                                <p className="text-[#4a3f33] italic leading-relaxed text-xs">
+                                  "{task.detalleEvidencia}"
+                                </p>
+                              </div>
+
+                              {/* Bloque 2 */}
+                              <div className="p-3 rounded-xl bg-[#fff7f5] border border-[#f5ded7] border-l-2 border-l-rose-500">
+                                <div className="flex items-center gap-1.5 font-bold text-[#b91c1c] mb-1 text-[11px] uppercase tracking-wider font-mono">
+                                  <BadgeAlert className="w-3.5 h-3.5" />
+                                  <span>2. Impacto Crítico en CRM:</span>
+                                </div>
+                                <p className="text-[#45271f] leading-relaxed text-xs">
+                                  {task.impactoIndispensableCRM}
+                                </p>
+                              </div>
+
+                              {/* Bloque 3 */}
+                              <div className="p-3 rounded-xl bg-[#f2f8f5] border border-[#d5e6df] border-l-2 border-l-teal-600">
+                                <div className="flex items-center gap-1.5 font-bold text-[#0f766e] mb-1 text-[11px] uppercase tracking-wider font-mono">
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                  <span>3. Acción y Protocolo Acordado:</span>
+                                </div>
+                                <p className="text-[#1a443c] font-semibold leading-relaxed text-xs">
+                                  {task.accionAcordada}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Metadatos adicionales */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-[#f7f3eb] text-[11px] text-[#574d3f]">
+                              <div>
+                                <span className="text-[#8c7f6f]">Categoría CRM:</span>{' '}
+                                <strong className="text-[#292524]">{task.categoria}</strong>
+                              </div>
+                              <div>
+                                <span className="text-[#8c7f6f]">Estado de Solución:</span>{' '}
+                                <strong className="text-[#292524]">{task.estado}</strong>
+                              </div>
+                              <div>
+                                <span className="text-[#8c7f6f]">Afectación Comercial:</span>{' '}
+                                <strong>{task.afectaVentasDirectas ? 'Impacta Ventas Directas' : 'Estabilidad Interna'}</strong>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Quick Footer inside Table with Add Task Prompt */}
+        {onAddNewTask && (
+          <div className="p-3 bg-[#faf6ee] border-t border-[#e4dccf] flex items-center justify-between">
+            <span className="text-xs text-[#786d5f]">
+              Arrastra las filas para reorganizar la mesa de acuerdos.
+            </span>
+            <button
+              type="button"
+              onClick={onAddNewTask}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#574c3e] hover:text-[#1c1917] hover:bg-[#ede5d8] border border-[#ded5c7] transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 text-amber-700" />
+              <span>Agregar otra ficha / pendiente</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
