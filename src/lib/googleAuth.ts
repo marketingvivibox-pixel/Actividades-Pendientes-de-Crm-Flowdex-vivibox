@@ -114,6 +114,18 @@ export const googleSignIn = async (): Promise<{ user: User | any; accessToken: s
     }
 
     // Translate common errors with actionable guidance
+    if (
+      error?.message?.includes('access_denied') ||
+      error?.message?.includes('verificación') ||
+      error?.code === 'auth/access-denied' ||
+      error?.code === '403'
+    ) {
+      throw new Error(
+        'Acceso restringido por Google (Error 403: app en fase de prueba en Google Cloud). ' +
+        '¡NO necesitas iniciar sesión con Google! Tu hoja de Google Sheets se sincroniza directamente sin cuenta con la opción "Sincronizar Hoja Pública" o pegando el enlace.'
+      );
+    }
+
     if (error?.code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized-domain')) {
       const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'este dominio';
       throw new Error(

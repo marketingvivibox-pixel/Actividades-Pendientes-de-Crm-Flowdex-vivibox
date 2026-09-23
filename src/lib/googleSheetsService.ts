@@ -79,8 +79,99 @@ export function extractSpreadsheetInfo(input: string): { id: string; gid?: strin
 }
 
 /**
- * Reads data from a public Google Sheet via server-side proxy without needing OAuth login.
- * Works seamlessly when sheet is set to "Cualquiera con el enlace".
+ * Parses Google Visualization (GViz) API table JSON structure into a 2D string/number array
+ */
+function parseGVizTable(table: any): (string | number)[][] {
+  if (!table) return [];
+  const { cols, rows } = table;
+  const headerRow: string[] = (cols || []).map((c: any) => String(c?.label || c?.id || '').trim());
+
+  const dataRows: (string | number)[][] = (rows || []).map((r: any) => {
+    if (!r || !r.c) return [];
+    return r.c.map((cell: any) => {
+      if (!cell) return '';
+      if (cell.f !== undefined && cell.f !== null) return cell.f;
+      if (cell.v !== undefined && cell.v !== null) return cell.v;
+      return '';
+    });
+  });
+
+  const hasHeaderLabels = headerRow.some((h) => h.length > 0 && isNaN(Number(h)));
+  if (hasHeaderLabels) {
+    return [headerRow, ...dataRows];
+  }
+  return dataRows;
+}
+
+/**
+ * Loads a public Google Sheet using JSONP in the browser.
+ * This completely avoids CORS restrictions and requires NO Google OAuth login or backend proxy,
+ * working seamlessly on any domain (Firebase Hosting, Cloud Run, GitHub Pages, etc.).
+ */
+function fetchGVizJsonp(
+  cleanId: string,
+  sheetTab?: string,
+  gid?: string
+): Promise<(string | number)[][]> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      return reject(new Error('JSONP requires browser window environment.'));
+    }
+
+    const callbackName = 'gviz_jsonp_' + Math.random().toString(36).substring(2, 10);
+    const script = document.createElement('script');
+    let url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(cleanId)}/gviz/tq?tqx=responseHandler:${callbackName}`;
+    if (sheetTab) url += `&sheet=${encodeURIComponent(sheetTab)}`;
+    if (gid) url += `&gid=${encodeURIComponent(gid)}`;
+
+    let timeoutId: any = null;
+
+    const cleanup = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      try {
+        delete (window as any)[callbackName];
+      } catch {
+        (window as any)[callbackName] = undefined;
+      }
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+
+    (window as any)[callbackName] = (response: any) => {
+      cleanup();
+      if (response && response.status === 'ok' && response.table) {
+        const rows = parseGVizTable(response.table);
+        if (rows.length > 0) {
+          resolve(rows);
+          return;
+        }
+      }
+      const errMsg = response?.errors?.[0]?.message || 'No se pudieron extraer datos de la hoja.';
+      reject(new Error(errMsg));
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('No se pudo conectar con Google Sheets mediante JSONP.'));
+    };
+
+    timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new Error('Tiempo de espera agotado al consultar Google Sheets.'));
+    }, 7000);
+
+    script.src = url;
+    document.body.appendChild(script);
+  });
+}
+
+/**
+ * Reads data from a public Google Sheet without needing OAuth login.
+ * Multi-layer strategy:
+ * 1. JSONP in browser (zero CORS, zero auth, works on any host)
+ * 2. Local backend proxy (/api/sheets/public-read)
+ * 3. Cloud Run production backend proxy
  */
 export async function readPublicSpreadsheet(
   spreadsheetId: string,
@@ -90,29 +181,76 @@ export async function readPublicSpreadsheet(
   const { id: cleanId, gid: extractedGid } = extractSpreadsheetInfo(spreadsheetId);
   const targetGid = gid || extractedGid;
 
-  const res = await fetch('/api/sheets/public-read', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      spreadsheetId: cleanId,
-      sheetTab,
-      gid: targetGid,
-    }),
-  });
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.success) {
-    throw new Error(
-      data?.message ||
-        'No se pudo acceder a la hoja de Google Sheets. Asegúrate de que el documento tenga permiso público ("Cualquiera con el enlace") o verifica el enlace.'
-    );
+  // 1. Try JSONP directly in the browser (Zero CORS, works across domains, no login required)
+  try {
+    const jsonpRows = await fetchGVizJsonp(cleanId, sheetTab, targetGid);
+    if (jsonpRows && jsonpRows.length > 0) {
+      return {
+        values: jsonpRows,
+        sheetTab: sheetTab || 'Hoja Principal',
+        rowCount: jsonpRows.length,
+      };
+    }
+  } catch (jsonpErr) {
+    console.warn('JSONP fetch attempt failed, trying server proxy...', jsonpErr);
   }
 
-  return {
-    values: data.values || [],
-    sheetTab: data.sheetTab || sheetTab || 'Hoja Principal',
-    rowCount: data.rowCount || (data.values || []).length,
-  };
+  // 2. Try local server-side proxy
+  try {
+    const res = await fetch('/api/sheets/public-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        spreadsheetId: cleanId,
+        sheetTab,
+        gid: targetGid,
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.values && data.values.length > 0) {
+        return {
+          values: data.values,
+          sheetTab: data.sheetTab || sheetTab || 'Hoja Principal',
+          rowCount: data.rowCount || data.values.length,
+        };
+      }
+    }
+  } catch (proxyErr) {
+    console.warn('Local proxy fetch attempt failed:', proxyErr);
+  }
+
+  // 3. Fallback to Cloud Run production backend proxy (for external domains like vivibox-analisis.web.app)
+  const cloudRunBase = 'https://ais-pre-uun37zvqyb4x7jpyyoalsx-234804285511.us-east1.run.app';
+  try {
+    const crRes = await fetch(`${cloudRunBase}/api/sheets/public-read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        spreadsheetId: cleanId,
+        sheetTab,
+        gid: targetGid,
+      }),
+    });
+
+    if (crRes.ok) {
+      const crData = await crRes.json();
+      if (crData.success && crData.values && crData.values.length > 0) {
+        return {
+          values: crData.values,
+          sheetTab: crData.sheetTab || sheetTab || 'Hoja Principal',
+          rowCount: crData.rowCount || crData.values.length,
+        };
+      }
+    }
+  } catch (crErr) {
+    console.warn('Cloud Run proxy fetch attempt failed:', crErr);
+  }
+
+  throw new Error(
+    'No se pudo acceder a la hoja de Google Sheets. Asegúrate de que el documento tenga permiso público ("Cualquiera con el enlace" en modo Lector) o verifica el enlace.'
+  );
 }
 
 /**
